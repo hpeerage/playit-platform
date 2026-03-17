@@ -1,68 +1,74 @@
 @import "tailwindcss";
 
+@theme {
+  --color-midnight: #0f172a;
+  --color-navy-dark: #1e293b;
+  --color-navy: #334155;
+  --color-electric-purple: #8b5cf6;
+  --color-status-empty: #475569;
+  --color-status-error: #ef4444;
+}
+
 @layer base {
-  :root {
-    --background: 240 10% 2%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 4%;
-    --card-foreground: 0 0% 98%;
-    --primary: 191 91% 50%; /* PICA Cyan */
-    --secondary: 262.1 83.3% 57.8%;
-    --accent: 316.4 70.2% 50.4%;
-    --border: 240 3.7% 15.9%;
-    --ring: 191 91% 50%;
+  body {
+    background-color: var(--color-midnight);
+    color: #f8fafc;
+    font-family: 'Pretendard', system-ui, -apple-system, sans-serif;
+    overflow: hidden;
   }
 }
 
-@theme {
-  --color-brand-cyan: #06b6d4;
-  --color-brand-emerald: #10b981;
-  --color-brand-amber: #f59e0b;
-  --color-brand-rose: #f43f5e;
-  --color-erp-dark: #121214;
-  --color-erp-gray: #1e1e22;
-  --color-erp-light: #2a2a2e;
+/* Glassmorphism for UI Panels */
+.panel-glass {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-body {
-  background-color: #121214;
-  color: #ffffff;
-  font-family: 'Inter', 'Pretendard', sans-serif;
-  overflow: hidden; /* For fixed layout like desktop app */
+.card-room {
+  background: rgba(51, 65, 85, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Custom Scrollbar for ERP look */
+.card-room:hover {
+  border-color: var(--color-electric-purple);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -10px rgba(139, 92, 246, 0.3);
+}
+
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2a2e;
+  background: #334155;
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a3a3e;
+  background: #475569;
 }
 
-/* Grid Layout specific */
-.room-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 4px;
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.erp-shadow {
-  box-shadow: 0 4px 20px -10px rgba(0, 0, 0, 0.5);
+.animate-in {
+  animation: fadeIn 0.4s ease-out forwards;
 }
 
-.text-cyan { color: #06b6d4; }
-.bg-cyan { background-color: #06b6d4; }
-.border-cyan { border-color: #06b6d4; }
+@keyframes pulse-purple {
+  0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(139, 92, 246, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+}
 
-/* Transitions */
-.transition-erp {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+.pulse-active {
+  animation: pulse-purple 2s infinite;
 }

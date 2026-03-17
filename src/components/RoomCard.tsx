@@ -1,14 +1,13 @@
 /* src/components/RoomCard.tsx */
 import React from 'react';
-import { Monitor, User, Info, Clock, Terminal } from 'lucide-react';
+import { Monitor, AlertCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
 import type { RoomStatus } from '../lib/supabase';
 
 interface RoomCardProps {
   roomNumber: string;
   status: RoomStatus;
-  userName?: string;
-  timeUsed?: string;
+  progress?: number; // 0 to 100 for the progress bar
   isSelected?: boolean;
   onClick: () => void;
 }
@@ -16,76 +15,80 @@ interface RoomCardProps {
 const RoomCard: React.FC<RoomCardProps> = ({ 
   roomNumber, 
   status, 
-  userName, 
-  timeUsed, 
+  progress = 0, 
   isSelected, 
   onClick 
 }) => {
   const isUsing = status === 'USING';
-  const isCleaning = status === 'CLEANING';
   const isMaintenance = status === 'MAINTENANCE';
 
   return (
     <div 
       onClick={onClick}
       className={cn(
-        "group relative flex flex-col h-[100px] w-full border text-[11px] p-2 leading-tight transition-erp select-none cursor-pointer",
-        isSelected ? "ring-2 ring-cyan-500 ring-inset z-20 shadow-lg shadow-cyan-500/20 scale-[1.03] rounded-sm" : "",
-        isUsing 
-          ? "bg-cyan-900/40 border-cyan-800/80 hover:bg-cyan-900/60" 
-          : isCleaning 
-          ? "bg-amber-900/40 border-amber-800/80 hover:bg-amber-900/60"
-          : isMaintenance 
-          ? "bg-rose-900/40 border-rose-800/80 hover:bg-rose-900/60"
-          : "bg-[#1e1e22] border-[#2a2a2e] hover:bg-[#222226]"
+        "group relative flex flex-col h-[140px] w-full rounded-2xl p-4 transition-all duration-300 select-none cursor-pointer card-room overflow-hidden",
+        isSelected ? "border-[#8b5cf6]/60 bg-[#8b5cf6]/10 ring-2 ring-[#8b5cf6]/40 z-10" : "hover:border-[#8b5cf6]/40"
       )}
     >
-      {/* Top Bar: Room # & Monitor Icon */}
-      <div className="flex items-center justify-between mb-1.5">
+      {/* 1. Header: Room # */}
+      <div className="flex items-center justify-between mb-3">
         <span className={cn(
-          "font-black tracking-tight text-sm",
-          isUsing ? "text-cyan-400" : "text-zinc-500"
+          "text-sm font-black italic tracking-tighter",
+          isUsing ? "text-[#8b5cf6]" : "text-slate-500"
         )}>
           {roomNumber}
         </span>
         <div className={cn(
-          "h-4 w-4 flex items-center justify-center rounded-sm",
-          isUsing ? "bg-cyan-500 text-black shadow-sm" : "bg-zinc-800 text-zinc-600"
-        )}>
-          <Monitor className="h-3 w-3 stroke-[3]" />
-        </div>
+          "w-1.5 h-1.5 rounded-full",
+          isUsing ? "bg-[#8b5cf6] animate-pulse" : isMaintenance ? "bg-red-500" : "bg-slate-700"
+        )} />
       </div>
 
-      {/* Main Info */}
-      <div className="flex-1 flex flex-col justify-center gap-1">
+      {/* 2. Main: Status Visualization */}
+      <div className="flex-1 flex flex-col items-center justify-center gap-2">
         {isUsing ? (
-          <>
-            <div className="flex items-center gap-1.5 text-white font-bold">
-              <User className="h-3 w-3 text-cyan-400" />
-              <span className="truncate">{userName || 'GUEST_USER'}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-cyan-400/80 font-mono text-[10px]">
-              <Clock className="h-3 w-3" />
-              <span>{timeUsed || '00:00:00'}</span>
-            </div>
-          </>
-        ) : isCleaning ? (
-          <div className="flex items-center gap-1.5 text-amber-500 font-bold uppercase tracking-wider">
-             <Terminal className="h-3 w-3" />
-             <span>Cleaning</span>
+          <div className="flex flex-col items-center animate-in">
+             <div className="w-10 h-10 rounded-xl bg-[#8b5cf6]/20 flex items-center justify-center text-[#8b5cf6] mb-1">
+                <Monitor className="w-5 h-5" />
+             </div>
+             <span className="text-[10px] font-black uppercase tracking-widest text-[#8b5cf6]/80">Active</span>
+          </div>
+        ) : isMaintenance ? (
+          <div className="flex flex-col items-center text-red-400">
+             <AlertCircle className="w-6 h-6 mb-1" />
+             <span className="text-[9px] font-black uppercase tracking-widest">Error</span>
           </div>
         ) : (
-          <div className="flex items-center gap-1.5 text-zinc-600 italic">
-             <span>Available</span>
+          <div className="flex flex-col items-center text-slate-600">
+             <span className="text-[11px] font-black uppercase tracking-[0.2em] italic">Empty</span>
           </div>
         )}
       </div>
 
-      {/* Status Indicators (Tiny bottom bar) */}
-      <div className="mt-1 flex gap-1">
-        <div className={cn("h-1 flex-1 rounded-full", isUsing ? "bg-cyan-400" : "bg-zinc-800")} />
-        <div className={cn("h-1 w-1 rounded-full", isUsing ? "bg-emerald-400" : "bg-zinc-800")} />
+      {/* 3. Bottom: Progress Bar */}
+      <div className="mt-3">
+        <div className="flex items-center justify-between mb-1.5 text-[9px] font-bold">
+           <span className={isUsing ? "text-slate-300" : "text-slate-600"}>
+              {isUsing ? "Session Progress" : "System Idle"}
+           </span>
+           {isUsing && <span className="text-[#8b5cf6]">{progress}%</span>}
+        </div>
+        <div className="h-1.5 w-full bg-slate-800/50 rounded-full overflow-hidden">
+           <div 
+             className={cn(
+               "h-full transition-all duration-1000",
+               isUsing ? "bg-gradient-to-r from-[#8b5cf6] to-purple-400" : "bg-slate-700 w-0"
+             )} 
+             style={{ width: isUsing ? `${progress}%` : '0%' }}
+           />
+        </div>
       </div>
+      
+      {/* Background Decor */}
+      <div className={cn(
+        "absolute top-0 right-0 w-12 h-12 bg-purple-500/10 blur-3xl rounded-full transition-opacity duration-500",
+        isUsing ? "opacity-100" : "opacity-0"
+      )} />
     </div>
   );
 };
