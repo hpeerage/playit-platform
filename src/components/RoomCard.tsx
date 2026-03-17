@@ -1,116 +1,90 @@
 /* src/components/RoomCard.tsx */
 import React from 'react';
-import { User, LogIn, LogOut, Cpu } from 'lucide-react';
+import { Monitor, User, Info, Clock, Terminal } from 'lucide-react';
 import { cn } from '../lib/utils';
 import type { RoomStatus } from '../lib/supabase';
 
 interface RoomCardProps {
   roomNumber: string;
   status: RoomStatus;
-  onCheckIn: () => void;
-  onCheckOut: () => void;
+  userName?: string;
+  timeUsed?: string;
+  isSelected?: boolean;
+  onClick: () => void;
 }
 
-const RoomCard: React.FC<RoomCardProps> = ({ roomNumber, status, onCheckIn, onCheckOut }) => {
+const RoomCard: React.FC<RoomCardProps> = ({ 
+  roomNumber, 
+  status, 
+  userName, 
+  timeUsed, 
+  isSelected, 
+  onClick 
+}) => {
   const isUsing = status === 'USING';
+  const isCleaning = status === 'CLEANING';
+  const isMaintenance = status === 'MAINTENANCE';
 
   return (
-    <div className={cn(
-      "group relative flex flex-col overflow-hidden rounded-3xl p-6 glass-card transition-standard h-[22rem]",
-      isUsing 
-        ? "border-blue-500/20 glow-primary" 
-        : "border-zinc-800/10"
-    )}>
-      {/* Dynamic Status Aura */}
-      <div className={cn(
-        "absolute -top-12 -right-12 h-40 w-40 rounded-full blur-[60px] transition-opacity duration-1000",
-        isUsing ? "bg-blue-600/30 opacity-100" : "bg-purple-600/10 opacity-40 group-hover:opacity-60"
-      )} />
-
-      {/* Room Header */}
-      <div className="flex items-start justify-between mb-8 z-10">
-        <div>
-          <h3 className="text-3xl font-black italic tracking-tighter text-white group-hover:text-blue-400 transition-colors">
-            {roomNumber}
-          </h3>
-          <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mt-1">Room Unit</p>
-        </div>
-        <div className={cn(
-          "flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest border",
-          isUsing 
-            ? "border-blue-500/40 bg-blue-500/10 text-blue-400" 
-            : "border-zinc-800 bg-zinc-900/40 text-zinc-500"
+    <div 
+      onClick={onClick}
+      className={cn(
+        "group relative flex flex-col h-[100px] w-full border text-[11px] p-2 leading-tight transition-erp select-none cursor-pointer",
+        isSelected ? "ring-2 ring-cyan-500 ring-inset z-20 shadow-lg shadow-cyan-500/20 scale-[1.03] rounded-sm" : "",
+        isUsing 
+          ? "bg-cyan-900/40 border-cyan-800/80 hover:bg-cyan-900/60" 
+          : isCleaning 
+          ? "bg-amber-900/40 border-amber-800/80 hover:bg-amber-900/60"
+          : isMaintenance 
+          ? "bg-rose-900/40 border-rose-800/80 hover:bg-rose-900/60"
+          : "bg-[#1e1e22] border-[#2a2a2e] hover:bg-[#222226]"
+      )}
+    >
+      {/* Top Bar: Room # & Monitor Icon */}
+      <div className="flex items-center justify-between mb-1.5">
+        <span className={cn(
+          "font-black tracking-tight text-sm",
+          isUsing ? "text-cyan-400" : "text-zinc-500"
         )}>
-          <span className={cn(
-            "h-1.5 w-1.5 rounded-full",
-            isUsing ? "bg-blue-400 animate-pulse" : "bg-zinc-700"
-          )} />
-          {isUsing ? 'Active' : 'Empty'}
+          {roomNumber}
+        </span>
+        <div className={cn(
+          "h-4 w-4 flex items-center justify-center rounded-sm",
+          isUsing ? "bg-cyan-500 text-black shadow-sm" : "bg-zinc-800 text-zinc-600"
+        )}>
+          <Monitor className="h-3 w-3 stroke-[3]" />
         </div>
       </div>
 
-      {/* PC Status Visualization */}
-      <div className="flex-1 space-y-5 z-10">
-        <div className="flex items-center gap-4">
-          <div className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-xl transition-colors",
-            isUsing ? "bg-blue-500/10 text-blue-400" : "bg-zinc-900/50 text-zinc-600"
-          )}>
-            <Cpu className="h-5 w-5" />
+      {/* Main Info */}
+      <div className="flex-1 flex flex-col justify-center gap-1">
+        {isUsing ? (
+          <>
+            <div className="flex items-center gap-1.5 text-white font-bold">
+              <User className="h-3 w-3 text-cyan-400" />
+              <span className="truncate">{userName || 'GUEST_USER'}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-cyan-400/80 font-mono text-[10px]">
+              <Clock className="h-3 w-3" />
+              <span>{timeUsed || '00:00:00'}</span>
+            </div>
+          </>
+        ) : isCleaning ? (
+          <div className="flex items-center gap-1.5 text-amber-500 font-bold uppercase tracking-wider">
+             <Terminal className="h-3 w-3" />
+             <span>Cleaning</span>
           </div>
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-zinc-600 font-bold">System Load</p>
-            <p className="text-sm font-medium text-zinc-300">{isUsing ? 'RTX 4080 • Stable' : 'Offline'}</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-xl transition-colors",
-            isUsing ? "bg-purple-500/10 text-purple-400" : "bg-zinc-900/50 text-zinc-600"
-          )}>
-            <User className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-zinc-600 font-bold">Occupancy</p>
-            <p className="text-sm font-medium text-zinc-300">{isUsing ? 'Authorized User' : 'No Access'}</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 mt-2">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className={cn(
-              "h-1 flex-1 rounded-full",
-              isUsing ? (i === 2 ? "bg-emerald-500/20" : "bg-emerald-500") : "bg-zinc-800"
-            )} />
-          ))}
-        </div>
-      </div>
-
-      {/* Action Button */}
-      <div className="mt-8 z-10">
-        {!isUsing ? (
-          <button
-            onClick={onCheckIn}
-            className="group/btn relative w-full overflow-hidden rounded-2xl bg-white p-3.5 text-black font-black uppercase tracking-widest text-xs transition-all hover:bg-white/90 active:scale-95"
-          >
-            <span className="flex items-center justify-center gap-2">
-              <LogIn className="h-4 w-4" />
-              Check In
-            </span>
-            <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500 transition-transform translate-y-full group-hover/btn:translate-y-0" />
-          </button>
         ) : (
-          <button
-            onClick={onCheckOut}
-            className="w-full rounded-2xl border border-zinc-800 bg-zinc-900/40 p-3.5 text-zinc-400 font-black uppercase tracking-widest text-xs transition-all hover:bg-zinc-800 hover:text-white active:scale-95"
-          >
-            <span className="flex items-center justify-center gap-2">
-              <LogOut className="h-4 w-4" />
-              Release Unit
-            </span>
-          </button>
+          <div className="flex items-center gap-1.5 text-zinc-600 italic">
+             <span>Available</span>
+          </div>
         )}
+      </div>
+
+      {/* Status Indicators (Tiny bottom bar) */}
+      <div className="mt-1 flex gap-1">
+        <div className={cn("h-1 flex-1 rounded-full", isUsing ? "bg-cyan-400" : "bg-zinc-800")} />
+        <div className={cn("h-1 w-1 rounded-full", isUsing ? "bg-emerald-400" : "bg-zinc-800")} />
       </div>
     </div>
   );

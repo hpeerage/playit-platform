@@ -6,86 +6,63 @@
     --foreground: 0 0% 98%;
     --card: 240 10% 4%;
     --card-foreground: 0 0% 98%;
-    --primary: 217.2 91.2% 59.8%;
+    --primary: 191 91% 50%; /* PICA Cyan */
     --secondary: 262.1 83.3% 57.8%;
     --accent: 316.4 70.2% 50.4%;
     --border: 240 3.7% 15.9%;
+    --ring: 191 91% 50%;
   }
 }
 
 @theme {
-  --color-brand-blue: #3b82f6;
-  --color-brand-purple: #8b5cf6;
-  --color-brand-pink: #ec4899;
+  --color-brand-cyan: #06b6d4;
+  --color-brand-emerald: #10b981;
+  --color-brand-amber: #f59e0b;
+  --color-brand-rose: #f43f5e;
+  --color-erp-dark: #121214;
+  --color-erp-gray: #1e1e22;
+  --color-erp-light: #2a2a2e;
 }
 
 body {
-  background-color: #050505;
+  background-color: #121214;
   color: #ffffff;
   font-family: 'Inter', 'Pretendard', sans-serif;
-  overflow-x: hidden;
+  overflow: hidden; /* For fixed layout like desktop app */
 }
 
-/* Glassmorphism Classes */
-.glass-panel {
-  background: rgba(15, 15, 20, 0.6);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+/* Custom Scrollbar for ERP look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2a2e;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3a3e;
 }
 
-.glass-card {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+/* Grid Layout specific */
+.room-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 4px;
 }
 
-.glass-card:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(59, 130, 246, 0.3);
-  transform: translateY(-4px) scale(1.01);
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+.erp-shadow {
+  box-shadow: 0 4px 20px -10px rgba(0, 0, 0, 0.5);
 }
 
-/* Gradient Text and Backgrounds */
-.text-gradient {
-  @apply bg-clip-text text-transparent bg-gradient-to-br from-blue-400 via-purple-400 to-pink-500;
-}
-
-.bg-gradient-brand {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
-}
-
-/* Animations */
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.5s ease-out forwards;
-}
-
-.glow-primary {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
-}
-
-.glow-purple {
-  box-shadow: 0 0 25px rgba(139, 92, 246, 0.4);
-}
+.text-cyan { color: #06b6d4; }
+.bg-cyan { background-color: #06b6d4; }
+.border-cyan { border-color: #06b6d4; }
 
 /* Transitions */
-.transition-standard {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.transition-erp {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
