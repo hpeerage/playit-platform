@@ -1,8 +1,8 @@
 /* src/App.tsx */
 import { useState, useMemo } from 'react';
 import { 
-  Zap, Users, Activity, ChevronRight, Monitor, Clock, Package, DollarSign, 
-  Search, Info, Terminal, MessageSquare, LogOut, Settings, Bell, RefreshCw, Layers, AlertCircle
+  Zap, Users, Activity, Monitor, Clock, Package, DollarSign, 
+  Search, Info, Terminal, MessageSquare, LogOut, Settings, RefreshCw, Layers
 } from 'lucide-react';
 import RoomCard from './components/RoomCard';
 import type { Room } from './lib/supabase';
