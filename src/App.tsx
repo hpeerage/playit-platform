@@ -132,12 +132,13 @@ function App() {
                
                {/* Avatar & Unit ID */}
                <div className="flex items-center gap-5 p-5 rounded-3xl bg-[#0f172a]/80 border border-white/5 shadow-inner">
-                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#8b5cf6]/20 to-transparent border border-white/10 flex items-center justify-center relative overflow-hidden shrink-0">
+                 <div className="w-16 h-16 rounded-2xl bg-[#0f172a] border border-white/10 flex items-center justify-center relative overflow-hidden shrink-0">
                    <img 
                      src={`https://api.dicebear.com/7.x/bottts/svg?seed=${selectedRoom.id}`} 
                      alt="User" 
-                     className="w-10 h-10 drop-shadow-[0_0_10px_rgba(139,92,246,0.5)]" 
-                     style={{ maxWidth: '40px', maxHeight: '40px' }}
+                     width="40"
+                     height="40"
+                     className="w-10 h-10 drop-shadow-[0_0_10px_rgba(139,92,246,0.5)] object-contain"
                    />
                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#8b5cf6]/30 to-transparent opacity-50" />
                  </div>

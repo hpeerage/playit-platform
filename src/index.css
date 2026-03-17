@@ -1,19 +1,20 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@theme {
-  --color-midnight: #0f172a;
-  --color-navy-dark: #1e293b;
-  --color-navy: #334155;
-  --color-electric-purple: #8b5cf6;
-  --color-status-empty: #475569;
-  --color-status-error: #ef4444;
+:root {
+  --midnight: #0f172a;
+  --navy-dark: #1e293b;
+  --navy: #334155;
+  --electric-purple: #8b5cf6;
 }
 
 @layer base {
   body {
-    background-color: var(--color-midnight);
+    background-color: var(--midnight);
     color: #f8fafc;
     font-family: 'Pretendard', system-ui, -apple-system, sans-serif;
+    margin: 0;
     overflow: hidden;
   }
 }
@@ -32,7 +33,7 @@
 }
 
 .card-room:hover {
-  border-color: var(--color-electric-purple);
+  border-color: var(--electric-purple);
   transform: translateY(-2px);
   box-shadow: 0 10px 25px -10px rgba(139, 92, 246, 0.3);
 }
