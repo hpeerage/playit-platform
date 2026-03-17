@@ -15,7 +15,7 @@ interface RoomCardProps {
 const RoomCard: React.FC<RoomCardProps> = ({ 
   roomNumber, 
   status, 
-  initialSeconds = 13515, // Roughly 3h 45m default 
+  initialSeconds = 13515, // 약 3시간 45분
   isSelected, 
   onClick 
 }) => {
@@ -51,15 +51,15 @@ const RoomCard: React.FC<RoomCardProps> = ({
         isSelected && "ring-2 ring-white ring-inset border-white"
       )}
     >
-      {/* Room Number */}
+      {/* 객실 번호 */}
       <span className={cn(
-        "text-xs font-bold mb-1",
+        "text-[11px] font-bold mb-1",
         isUsing ? "text-white" : "text-slate-400"
       )}>
-        {roomNumber}
+        {roomNumber}호
       </span>
 
-      {/* Status Icon */}
+      {/* 상태 아이콘 */}
       <div className="mb-1">
         {isUsing ? (
           <User className="w-5 h-5 text-white" />
@@ -70,7 +70,7 @@ const RoomCard: React.FC<RoomCardProps> = ({
         )}
       </div>
 
-      {/* Remaining Time */}
+      {/* 남은 시간 / 상태 */}
       <div className="flex flex-col items-center">
         {isUsing && (
           <div className="flex items-center gap-1 animate-timer">
@@ -81,13 +81,18 @@ const RoomCard: React.FC<RoomCardProps> = ({
           </div>
         )}
         {isEmpty && (
-          <span className="text-[9px] font-bold text-slate-600 uppercase tracking-tighter">
-            Empty
+          <span className="text-[9px] font-bold text-slate-600 tracking-tighter">
+            빈 객실
+          </span>
+        )}
+        {isError && (
+          <span className="text-[8px] font-black text-white uppercase">
+            점검 중
           </span>
         )}
       </div>
       
-      {/* Selection Glow */}
+      {/* 선택 효과 */}
       {isSelected && (
         <div className="absolute inset-0 bg-white/10 pointer-events-none" />
       )}

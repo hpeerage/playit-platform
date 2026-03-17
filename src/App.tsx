@@ -34,6 +34,11 @@ function App() {
     setRooms(prev => prev.map(r => r.id === roomId ? { ...r, status: newStatus } : r));
   };
 
+  // 금액 포맷 (1,000원 형식)
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('ko-KR').format(amount) + '원';
+  };
+
   return (
     <div className="flex flex-col h-screen bg-[#1e293b] text-[#f8fafc] font-sans selection:bg-purple-500/30 overflow-hidden">
       
@@ -44,25 +49,25 @@ function App() {
               <Zap className="w-5 h-5 text-white fill-white" />
            </div>
            <div className="flex flex-col">
-              <span className="font-black text-xl tracking-tighter uppercase italic text-white leading-none">Playit Admin</span>
-              <span className="text-[9px] font-bold text-slate-500 tracking-widest uppercase opacity-60">Control Center Enterprise v2.0</span>
+              <span className="font-black text-xl tracking-tighter uppercase italic text-white leading-none">Playit 관리자</span>
+              <span className="text-[9px] font-bold text-slate-500 tracking-widest uppercase opacity-60">통합 관리 시스템 v2.1</span>
            </div>
         </div>
 
         <div className="flex items-center gap-10">
            <div className="flex items-center gap-6">
               <div className="flex flex-col items-end">
-                 <span className="text-[10px] text-slate-500 font-bold uppercase leading-none mb-1">Total Units</span>
+                 <span className="text-[10px] text-slate-500 font-bold uppercase leading-none mb-1">총 객실</span>
                  <span className="text-lg font-black italic">{stats.total}</span>
               </div>
               <div className="h-6 w-[1px] bg-white/10" />
               <div className="flex flex-col items-end">
-                 <span className="text-[10px] text-[#8b5cf6] font-bold uppercase leading-none mb-1">Active PC</span>
+                 <span className="text-[10px] text-[#8b5cf6] font-bold uppercase leading-none mb-1">사용 중</span>
                  <span className="text-lg font-black italic text-[#8b5cf6]">{stats.using}</span>
               </div>
               <div className="h-6 w-[1px] bg-white/10" />
               <div className="flex flex-col items-end">
-                 <span className="text-[10px] text-red-500 font-bold uppercase leading-none mb-1">Alerts</span>
+                 <span className="text-[10px] text-red-500 font-bold uppercase leading-none mb-1">점검 필요</span>
                  <span className="text-lg font-black italic text-red-500">{stats.maintenance}</span>
               </div>
            </div>
@@ -72,8 +77,8 @@ function App() {
                  <User className="w-4 h-4 text-[#8b5cf6]" />
               </div>
               <div className="flex flex-col">
-                 <span className="text-[10px] font-black italic">SUPER_MANAGER</span>
-                 <span className="text-[8px] font-bold text-emerald-400 uppercase">Online</span>
+                 <span className="text-[10px] font-black italic">마스터_관리자</span>
+                 <span className="text-[8px] font-bold text-emerald-400 uppercase">접속 중</span>
               </div>
            </div>
         </div>
@@ -108,7 +113,7 @@ function App() {
                 <div className="flex items-center justify-between mb-10">
                    <div className="flex items-center gap-3">
                       <div className="w-2 h-8 bg-[#8b5cf6] rounded-full" />
-                      <h3 className="text-xl font-black italic uppercase tracking-tighter">Unit #{selectedRoom.room_number}</h3>
+                      <h3 className="text-xl font-black italic uppercase tracking-tighter">{selectedRoom.room_number}호 상세 정보</h3>
                    </div>
                    <button 
                      onClick={() => setSelectedRoomId(null)}
@@ -129,24 +134,24 @@ function App() {
                             <Monitor className="w-7 h-7" />
                          </div>
                          <div>
-                            <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 opacity-60">Status Dashboard</div>
+                            <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 opacity-60">객실 상태</div>
                             <div className={cn(
                               "text-lg font-black italic",
                               selectedRoom.status === 'USING' ? "text-[#8b5cf6]" : "text-white"
                             )}>
-                               {selectedRoom.status === 'USING' ? "SESSION ACTIVE" : "SYSTEM IDLE"}
+                               {selectedRoom.status === 'USING' ? "현재 사용 중" : "사용 가능"}
                             </div>
                          </div>
                       </div>
                       
                       <div className="grid grid-cols-2 gap-6 pt-5 border-t border-white/5">
                          <div>
-                            <div className="text-[9px] font-bold text-slate-500 uppercase tracking-tight mb-0.5">Start Timestamp</div>
+                            <div className="text-[9px] font-bold text-slate-500 uppercase tracking-tight mb-0.5">입실 시각</div>
                             <div className="text-xs font-black italic tracking-tighter">14:52:10</div>
                          </div>
                          <div>
-                            <div className="text-[9px] font-bold text-slate-500 uppercase tracking-tight mb-0.5">Uptime Meter</div>
-                            <div className="text-xs font-black italic text-[#8b5cf6] tracking-tighter">02h 45m 12s</div>
+                            <div className="text-[9px] font-bold text-slate-500 uppercase tracking-tight mb-0.5">이용 시간</div>
+                            <div className="text-xs font-black italic text-[#8b5cf6] tracking-tighter">02시간 45분</div>
                          </div>
                       </div>
                    </div>
@@ -156,18 +161,18 @@ function App() {
                       <div className="flex items-center justify-between mb-5">
                          <div className="flex items-center gap-2">
                             <ShoppingCart className="w-4 h-4 text-emerald-400" />
-                            <span className="text-[11px] font-black uppercase tracking-widest italic">Order Manifest</span>
+                            <span className="text-[11px] font-black uppercase tracking-widest italic">주문 현황</span>
                          </div>
-                         <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[8px] font-black rounded-full border border-emerald-500/20 uppercase tracking-widest">In Process</span>
+                         <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[8px] font-black rounded-full border border-emerald-500/20 uppercase tracking-widest">준비 중</span>
                       </div>
                       <div className="space-y-3">
                          <div className="flex justify-between items-center text-[12px] bg-black/30 p-4 rounded-2xl border border-white/5 group hover:border-[#8b5cf6]/30 transition-colors">
-                            <span className="text-slate-400 group-hover:text-white">Iced Americano (L)</span>
-                            <span className="font-black italic text-slate-200">$4.50</span>
+                            <span className="text-slate-400 group-hover:text-white">아이스 아메리카노 (L)</span>
+                            <span className="font-black italic text-slate-200">{formatCurrency(4500)}</span>
                          </div>
                          <div className="flex justify-between items-center text-[12px] bg-black/30 p-4 rounded-2xl border border-white/5 group hover:border-[#8b5cf6]/30 transition-colors">
-                            <span className="text-slate-400 group-hover:text-white">Spicy Ramen Combo</span>
-                            <span className="font-black italic text-slate-200">$8.90</span>
+                            <span className="text-slate-400 group-hover:text-white">불닭볶음면 세트</span>
+                            <span className="font-black italic text-slate-200">{formatCurrency(8900)}</span>
                          </div>
                       </div>
                    </div>
@@ -178,7 +183,7 @@ function App() {
                         onClick={() => handleAction(selectedRoom.id, 'USING')}
                         className="w-full h-16 bg-[#8b5cf6] hover:bg-purple-600 rounded-2xl flex items-center justify-center gap-3 text-sm font-black uppercase tracking-widest transition-all shadow-xl shadow-purple-500/20 active:scale-[0.98] group"
                       >
-                         <CheckCircle2 className="w-5 h-5 group-hover:scale-110 transition-transform" /> Approve Session
+                         <CheckCircle2 className="w-5 h-5 group-hover:scale-110 transition-transform" /> 주문 승인 및 처리
                       </button>
                       
                       <div className="grid grid-cols-2 gap-4">
@@ -186,13 +191,17 @@ function App() {
                            onClick={() => handleAction(selectedRoom.id, 'MAINTENANCE')}
                            className="h-14 bg-red-400/5 hover:bg-red-400/10 border border-red-500/20 text-red-500 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all hover:border-red-500/40"
                          >
-                            <AlertCircle className="w-4 h-4" /> Set Error
+                            <AlertCircle className="w-4 h-4" /> 점검 항목 설정
                          </button>
                          <button 
-                           onClick={() => handleAction(selectedRoom.id, 'EMPTY')}
+                           onClick={() => {
+                             if(confirm("해당 객실을 퇴실 처리하시겠습니까? PC 전원이 종료됩니다.")) {
+                               handleAction(selectedRoom.id, 'EMPTY');
+                             }
+                           }}
                            className="h-14 bg-slate-800 hover:bg-slate-700 border border-white/5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all hover:text-white"
                          >
-                            <LogOut className="w-4 h-4" /> Remote Shut
+                            <LogOut className="w-4 h-4" /> 강제 퇴실 (종료)
                          </button>
                       </div>
                    </div>
@@ -202,7 +211,7 @@ function App() {
                    <div className="flex items-center gap-3 p-5 rounded-2xl bg-black/40 border border-white/5 shadow-inner">
                       <Clock className="w-4 h-4 text-slate-700" />
                       <div className="flex flex-col">
-                         <span className="text-[8px] font-bold text-slate-600 uppercase tracking-widest">Core Synchronized</span>
+                         <span className="text-[8px] font-bold text-slate-600 uppercase tracking-widest">시스템 동기화 완료</span>
                          <span className="text-[11px] font-black italic tracking-tighter text-slate-400">{new Date().toLocaleTimeString()}</span>
                       </div>
                       <div className="flex-1" />
@@ -213,7 +222,7 @@ function App() {
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-slate-800 opacity-20 select-none">
                  <Monitor className="w-20 h-20 mb-6" />
-                 <p className="text-xs font-black uppercase tracking-[0.6em] text-center leading-loose">Awaiting Command<br/>Selection</p>
+                 <p className="text-xs font-black uppercase tracking-[0.6em] text-center leading-loose">제어할 객실을<br/>선택해 주세요</p>
               </div>
             )}
          </aside>
@@ -223,13 +232,13 @@ function App() {
       <footer className="h-[28px] bg-[#0f172a] flex items-center px-6 justify-between shrink-0 select-none border-t border-white/5 z-50 shadow-inner">
          <div className="flex items-center gap-6">
             <span className="text-[9px] font-black text-slate-500 italic uppercase tracking-[0.2em] flex items-center gap-2">
-               <Zap className="w-3 h-3 text-[#8b5cf6]" /> Connection: 100% Stable
+               <Zap className="w-3 h-3 text-[#8b5cf6]" /> 시스템 연결: 아주 안정적
             </span>
             <div className="h-3 w-[px] bg-white/5" />
-            <span className="text-[9px] font-bold text-slate-700 uppercase tracking-tighter italic">Server Node: playit-hub-az1</span>
+            <span className="text-[9px] font-bold text-slate-700 uppercase tracking-tighter italic">서버 노드: playit-hub-kor-01</span>
          </div>
          <div className="flex items-center gap-4 text-[9px] font-black text-slate-800 uppercase italic tracking-widest">
-            UPTIME: {Math.floor(Date.now()/1000000)}ms
+            당일 총 매출: {formatCurrency(1245000)}
          </div>
       </footer>
     </div>
