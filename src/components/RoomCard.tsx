@@ -1,13 +1,12 @@
-/* src/components/RoomCard.tsx */
-import React, { useState, useEffect } from 'react';
-import { Monitor, AlertCircle, User, Clock } from 'lucide-react';
+/* src/components/RoomCard.tsx - Premium High-Density Version */
+import React from 'react';
 import { cn } from '../lib/utils';
 import type { RoomStatus } from '../lib/supabase';
 
 interface RoomCardProps {
   roomNumber: string;
   status: RoomStatus;
-  initialSeconds?: number;
+  remainingTime?: string;
   isSelected?: boolean;
   onClick: () => void;
 }
@@ -15,86 +14,72 @@ interface RoomCardProps {
 const RoomCard: React.FC<RoomCardProps> = ({ 
   roomNumber, 
   status, 
-  initialSeconds = 13515, // 약 3시간 45분
+  remainingTime = "00:00:00",
   isSelected, 
   onClick 
 }) => {
-  const [seconds, setSeconds] = useState(initialSeconds);
   const isUsing = status === 'USING';
   const isError = status === 'MAINTENANCE';
-  const isEmpty = status === 'EMPTY' || status === 'CLEANING';
-
-  useEffect(() => {
-    let timer: number;
-    if (isUsing && seconds > 0) {
-      timer = window.setInterval(() => {
-        setSeconds(prev => prev - 1);
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [isUsing, seconds]);
-
-  const formatTime = (totalSeconds: number) => {
-    const h = Math.floor(totalSeconds / 3600);
-    const m = Math.floor((totalSeconds % 3600) / 60);
-    const s = totalSeconds % 60;
-    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
 
   return (
     <div 
       onClick={onClick}
       className={cn(
-        "room-card-square group",
-        isUsing && "room-card-using",
-        isError && "animate-blink-red",
-        isSelected && "ring-2 ring-white ring-inset border-white"
+        "aspect-square flex flex-col p-3 rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden relative group",
+        "bg-[#161c2e]/60 border-white/5 hover:border-white/20",
+        isUsing && "glow-purple bg-purple-500/5 border-purple-500/30",
+        isError && "glow-red bg-red-500/5 border-red-500/30",
+        isSelected && "ring-2 ring-white/30 border-white/50 scale-[1.02] z-10"
       )}
     >
-      {/* 객실 번호 */}
-      <span className={cn(
-        "text-[11px] font-bold mb-1",
-        isUsing ? "text-white" : "text-slate-400"
-      )}>
-        {roomNumber}호
-      </span>
-
-      {/* 상태 아이콘 */}
-      <div className="mb-1">
-        {isUsing ? (
-          <User className="w-5 h-5 text-white" />
-        ) : isError ? (
-          <AlertCircle className="w-5 h-5 text-white" />
-        ) : (
-          <Monitor className="w-4 h-4 text-slate-600 group-hover:text-purple-400" />
-        )}
+      {/* 1. Header: Room ID & Status Dot */}
+      <div className="flex justify-between items-center mb-1">
+        <span className={cn(
+          "text-[11px] font-black tracking-tight uppercase",
+          isUsing ? "text-white" : "text-slate-500"
+        )}>
+          PC {roomNumber.padStart(2, '0')}
+        </span>
+        <div className={cn(
+          "w-1.5 h-1.5 rounded-full",
+          isUsing ? "bg-purple-500 glow-purple" : isError ? "bg-red-500 glow-red animate-pulse" : "bg-slate-700"
+        )} />
       </div>
 
-      {/* 남은 시간 / 상태 */}
-      <div className="flex flex-col items-center">
-        {isUsing && (
-          <div className="flex items-center gap-1 animate-timer">
-            <Clock className="w-2.5 h-2.5 text-white/70" />
-            <span className="text-[9px] font-mono font-bold text-white tracking-tighter">
-              {formatTime(seconds)}
-            </span>
+      {/* 2. Body: Status Label / Time */}
+      <div className="flex-1 flex flex-col items-center justify-center">
+        {isUsing ? (
+          <div className="flex flex-col items-center">
+             <div className="text-[14px] font-mono font-black text-white leading-none tracking-tighter">
+                {remainingTime}
+             </div>
+             <div className="text-[7px] font-bold text-slate-500 uppercase tracking-widest mt-1">Remaining</div>
+          </div>
+        ) : isError ? (
+          <div className="flex flex-col items-center">
+             <span className="text-[9px] font-black text-red-400 uppercase tracking-wider">Error</span>
+             <span className="text-[6px] text-red-400/60 uppercase font-bold mt-0.5">Hardware Fail</span>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center opacity-40 group-hover:opacity-100 transition-opacity">
+             <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Empty</span>
+             <span className="text-[6px] text-slate-600 uppercase font-bold mt-0.5">Available</span>
           </div>
         )}
-        {isEmpty && (
-          <span className="text-[9px] font-bold text-slate-600 tracking-tighter">
-            빈 객실
-          </span>
-        )}
-        {isError && (
-          <span className="text-[8px] font-black text-white uppercase">
-            점검 중
-          </span>
-        )}
+      </div>
+
+      {/* 3. Footer: Sub-info / Client Icon */}
+      <div className="mt-2 pt-2 border-t border-white/5 flex items-center justify-between">
+         <div className="flex gap-1">
+            <div className={cn("w-1 h-1 rounded-full", isUsing ? "bg-purple-500/50" : "bg-slate-800")} />
+            <div className={cn("w-1 h-1 rounded-full", isUsing ? "bg-purple-500/50" : "bg-slate-800")} />
+         </div>
+         <span className="text-[8px] font-bold text-slate-700 uppercase italic">Playit_OS</span>
       </div>
       
-      {/* 선택 효과 */}
-      {isSelected && (
-        <div className="absolute inset-0 bg-white/10 pointer-events-none" />
+      {/* Active Selection Glow */}
+      {isUsing && (
+        <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/5 to-transparent pointer-events-none" />
       )}
     </div>
   );

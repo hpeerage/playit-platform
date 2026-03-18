@@ -1,118 +1,69 @@
+/* src/index.css - Premium Dashboard Design System */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --midnight: #1e293b;
-  --navy-dark: #0f172a;
-  --electric-purple: #8b5cf6;
-  --status-empty: #334155;
-  --status-using: #8b5cf6;
-  --status-error: #ef4444;
+  --bg-dark: #0a0f1e;
+  --bg-card: #161c2e;
+  --bg-active: rgba(139, 92, 246, 0.1);
+  --primary: #8b5cf6;
+  --secondary: #3b82f6;
+  --accent: #10b981;
+  --error: #ef4444;
+  --border-glass: rgba(255, 255, 255, 0.05);
 }
 
 @layer base {
   body {
-    background-color: var(--midnight);
-    color: #f8fafc;
-    font-family: 'Pretendard', 'Noto Sans KR', system-ui, -apple-system, sans-serif;
-    margin: 0;
-    overflow: hidden;
-    height: 100vh;
+    @apply bg-[#020617] text-slate-100 font-sans antialiased overflow-hidden h-screen;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.08) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.05) 0px, transparent 50%);
   }
 }
 
-/* 10-column Grid Layout */
-.grid-container {
-  display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  gap: 8px;
-  padding: 24px;
-  overflow-y: auto;
-  height: 100%;
+@layer components {
+  /* High Density Grid */
+  .grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    @apply gap-3 p-6 overflow-y-auto h-full min-w-0 transition-all duration-500;
+  }
+
+  /* Premium Card Base */
+  .premium-card {
+    @apply bg-[#161c2e]/80 border border-white/5 backdrop-blur-md rounded-xl transition-all duration-300 cursor-pointer;
+  }
+
+  .premium-card:hover {
+    @apply border-white/20 -translate-y-1 shadow-2xl;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  /* Neon Effects */
+  .glow-purple {
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.3), inset 0 0 10px rgba(139, 92, 246, 0.1);
+    @apply border-purple-500/50;
+  }
+
+  .glow-red {
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.3), inset 0 0 10px rgba(239, 68, 68, 0.1);
+    @apply border-red-500/50;
+  }
+
+  .glow-green {
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+  }
 }
 
-/* Room Card - Base */
-.room-card-square {
-  aspect-ratio: 1 / 1;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(15, 23, 42, 0.4);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  position: relative;
-  overflow: hidden;
+/* Scrollbar Refinement */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { 
+  background: rgba(255, 255, 255, 0.05); 
+  @apply rounded-full;
 }
-
-.room-card-square:hover {
-  border-color: var(--electric-purple);
-  background: rgba(139, 92, 246, 0.1);
-  transform: scale(1.02);
-  z-index: 10;
-}
-
-/* Using State */
-.room-card-using {
-  background: var(--electric-purple) !important;
-  color: white !important;
-  border: none !important;
-  box-shadow: 0 4px 20px -5px rgba(139, 92, 246, 0.5);
-}
-
-/* Error/Call Blinking */
-@keyframes blink-red {
-  0% { background-color: var(--status-error); }
-  50% { background-color: rgba(239, 68, 68, 0.4); }
-  100% { background-color: var(--status-error); }
-}
-
-.animate-blink-red {
-  animation: blink-red 0.8s infinite;
-  color: white !important;
-}
-
-/* Detail Sidebar */
-.detail-sidebar {
-  width: 400px;
-  height: 100%;
-  background: var(--navy-dark);
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 32px;
-  position: absolute;
-  right: 0;
-  top: 0;
-  box-shadow: -15px 0 40px rgba(0, 0, 0, 0.6);
-  z-index: 50;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 10px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #475569;
-}
-
-/* Countdown Animation */
-@keyframes timer-pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.7; }
-  100% { opacity: 1; }
-}
-.animate-timer {
-  animation: timer-pulse 2s infinite;
+::-webkit-scrollbar-thumb:hover { 
+  background: rgba(139, 92, 246, 0.4); 
 }
