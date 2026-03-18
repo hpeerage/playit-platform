@@ -1,6 +1,6 @@
 /* src/components/DetailPanel.tsx - Premium Dash Sidebar */
 import React from 'react';
-import { X, User, Clock, Monitor, Activity, LogOut, Terminal, Zap, CreditCard, ChevronRight } from 'lucide-react';
+import { X, Clock, Monitor, Activity, LogOut, Terminal, Zap, CreditCard, ChevronRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 import type { Room } from '../lib/supabase';
 
