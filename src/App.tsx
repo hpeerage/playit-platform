@@ -1,11 +1,11 @@
 /* src/App.tsx - Main Router */
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import AdminDashboard from './pages/AdminDashboard';
 import ClientLauncher from './pages/ClientLauncher';
 
 function App() {
   return (
-    <Router basename="/playit-platform">
+    <Router>
       <Routes>
         <Route path="/" element={<AdminDashboard />} />
         <Route path="/client" element={<ClientLauncher />} />
