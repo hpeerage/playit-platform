@@ -17,13 +17,13 @@ const ClientLauncher = () => {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,#a855f71a,transparent_70%)]" />
       
       {/* Layered Content */}
-      <div className="relative z-10 flex flex-col h-screen">
+      <div className="relative z-10 flex flex-col h-screen overflow-hidden">
         <ClientHeader />
 
-        <main className="flex-1 flex flex-col justify-center px-10 pb-20 overflow-x-auto custom-scrollbar">
-          <div className="mb-10">
-             <span className="text-xs font-black uppercase tracking-[0.4em] text-purple-500/60 mb-2 block">Menu Category</span>
-             <h2 className="text-4xl font-black italic tracking-tighter text-white">READY TO PLAY?</h2>
+        <main className="flex-1 flex flex-col justify-center px-10 py-6 overflow-x-auto custom-scrollbar">
+          <div className="mb-6">
+             <span className="text-[10px] font-black uppercase tracking-[0.4em] text-purple-500/60 mb-1 block">Menu Category</span>
+             <h2 className="text-3xl font-black italic tracking-tighter text-white uppercase">Ready to Play?</h2>
           </div>
 
           <div className="flex gap-8 pb-10">
