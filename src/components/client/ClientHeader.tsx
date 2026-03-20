@@ -1,14 +1,22 @@
-/* src/components/client/ClientHeader.tsx */
 import { useState, useEffect } from 'react';
 import { Clock, Battery, Wifi, User } from 'lucide-react';
 
 const ClientHeader = () => {
-  const [, setTime] = useState(new Date());
+  const [timeLeft, setTimeLeft] = useState(8085); // 02:14:45 in seconds
 
   useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  const formatTime = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
 
   return (
     <header className="flex justify-between items-center py-4 px-10 select-none bg-slate-950/20 backdrop-blur-sm border-b border-white/5">
@@ -37,7 +45,7 @@ const ClientHeader = () => {
                 <span className="text-[9px] font-bold text-purple-300 uppercase tracking-widest">Time Remaining</span>
               </div>
               <div className="text-4xl font-black tabular-nums leading-none tracking-tighter text-white drop-shadow-[0_0_15px_rgba(168,85,247,0.4)]">
-                02:14:45
+                {formatTime(timeLeft)}
               </div>
            </div>
         </div>

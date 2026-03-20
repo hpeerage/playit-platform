@@ -1,15 +1,15 @@
-/* src/components/DetailPanel.tsx - Premium Dash Sidebar */
-import React from 'react';
-import { X, Clock, Monitor, Activity, LogOut, Terminal, Zap, CreditCard, ChevronRight } from 'lucide-react';
+import { X, Clock, Monitor, Activity, LogOut, Terminal, Zap, Settings2, Trash2, CheckCircle2 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import type { Room } from '../lib/supabase';
+import type { Room, RoomStatus } from '../lib/supabase';
 
 interface DetailPanelProps {
   room: Room | null;
   onClose: () => void;
+  onStatusChange: (roomId: string, status: RoomStatus) => void;
+  onCheckout: (roomId: string) => void;
 }
 
-const DetailPanel: React.FC<DetailPanelProps> = ({ room, onClose }) => {
+const DetailPanel: React.FC<DetailPanelProps> = ({ room, onClose, onStatusChange, onCheckout }) => {
   return (
     <aside className={cn(
       "fixed top-0 right-0 h-full bg-[#0a0f1e] border-l border-white/5 shadow-[-40px_0_60px_rgba(0,0,0,0.8)] z-[2000] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden",
@@ -22,9 +22,17 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ room, onClose }) => {
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Selected Station</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 glow-green" />
+                <span className={cn(
+                  "w-1.5 h-1.5 rounded-full glow-green",
+                  room.status === 'USING' ? "bg-emerald-500" : 
+                  room.status === 'MAINTENANCE' ? "bg-red-500" :
+                  room.status === 'CLEANING' ? "bg-blue-500" : "bg-slate-500"
+                )} />
               </div>
-              <h3 className="text-2xl font-black italic text-white tracking-tighter">PC {room.room_number.padStart(2, '0')} <span className="text-emerald-500 text-sm not-italic ml-2">(Active)</span></h3>
+              <h3 className="text-2xl font-black italic text-white tracking-tighter">PC {room.room_number.padStart(2, '0')} <span className={cn(
+                "text-sm not-italic ml-2 lowercase first-letter:uppercase",
+                room.status === 'USING' ? "text-emerald-500" : "text-slate-500"
+              )}>({room.status})</span></h3>
             </div>
             <button onClick={onClose} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-2xl transition-all group">
               <X className="w-5 h-5 text-slate-400 group-hover:text-white" />
@@ -32,39 +40,78 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ room, onClose }) => {
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
-            {/* 1. User Info Summary */}
+            {/* 1. Status Controls */}
             <div className="space-y-4">
-               <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 uppercase tracking-wider pb-2 border-b border-white/5 text-slate-300">
-                  <span>User Details</span>
-                  <ChevronRight className="w-3 h-3" />
+               <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">
+                  <Settings2 className="w-3 h-3" />
+                  Quick Management
                </div>
-               <div className="grid grid-cols-2 gap-y-3">
-                  <div className="flex flex-col">
-                     <span className="text-[9px] text-slate-600 font-bold uppercase">User</span>
-                     <span className="text-xs font-bold text-white">Park Ji-Woo</span>
-                  </div>
-                  <div className="flex flex-col">
-                     <span className="text-[9px] text-slate-600 font-bold uppercase">Plan</span>
-                     <span className="text-xs font-bold text-white">3hr / ₩5,000</span>
-                  </div>
-                  <div className="flex flex-col">
-                     <span className="text-[9px] text-slate-600 font-bold uppercase">Started</span>
-                     <span className="text-xs font-bold text-white italic">14:15:22</span>
-                  </div>
-                  <div className="flex flex-col">
-                     <span className="text-[9px] text-slate-600 font-bold uppercase">Game</span>
-                     <span className="text-xs font-bold text-purple-400">Valorant</span>
-                  </div>
+               <div className="grid grid-cols-2 gap-2">
+                  <button 
+                    onClick={() => onStatusChange(room.id, 'EMPTY')}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2.5 rounded-xl border text-[9px] font-black uppercase transition-all",
+                      room.status === 'EMPTY' ? "bg-slate-700 border-white/20 text-white" : "bg-white/5 border-white/5 text-slate-400 hover:bg-white/10"
+                    )}
+                  >
+                    <Trash2 className="w-3 h-3" /> Set Empty
+                  </button>
+                  <button 
+                    onClick={() => onStatusChange(room.id, 'CLEANING')}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2.5 rounded-xl border text-[9px] font-black uppercase transition-all",
+                      room.status === 'CLEANING' ? "bg-blue-600/40 border-blue-500/50 text-white" : "bg-white/5 border-white/5 text-slate-400 hover:bg-blue-500/20"
+                    )}
+                  >
+                    <Activity className="w-3 h-3" /> Cleaning
+                  </button>
+                  <button 
+                    onClick={() => onStatusChange(room.id, 'MAINTENANCE')}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2.5 rounded-xl border text-[9px] font-black uppercase transition-all",
+                      room.status === 'MAINTENANCE' ? "bg-red-600/40 border-red-500/50 text-white" : "bg-white/5 border-white/5 text-slate-400 hover:bg-red-500/20"
+                    )}
+                  >
+                    <Zap className="w-3 h-3" /> Maintenance
+                  </button>
+                  <button 
+                    onClick={() => onStatusChange(room.id, 'USING')}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2.5 rounded-xl border text-[9px] font-black uppercase transition-all",
+                      room.status === 'USING' ? "bg-emerald-600/40 border-emerald-500/50 text-white" : "bg-white/5 border-white/5 text-slate-400 hover:bg-emerald-500/20"
+                    )}
+                  >
+                    <CheckCircle2 className="w-3 h-3" /> Set Using
+                  </button>
                </div>
             </div>
 
-            {/* 2. Hardware / Activity Stats */}
+            {/* 2. User Info (Only if using) */}
+            {room.status === 'USING' && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-500">
+                <div className="flex justify-between items-center text-[11px] font-bold text-slate-300 uppercase tracking-wider pb-2 border-b border-white/5">
+                    <span>Active Session</span>
+                </div>
+                <div className="grid grid-cols-2 gap-y-3">
+                    <div className="flex flex-col">
+                        <span className="text-[9px] text-slate-600 font-bold uppercase">User</span>
+                        <span className="text-xs font-bold text-white">Park Ji-Woo</span>
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-[9px] text-slate-600 font-bold uppercase">Plan</span>
+                        <span className="text-xs font-bold text-white">3hr / ₩5,000</span>
+                    </div>
+                </div>
+              </div>
+            )}
+
+            {/* 3. Hardware Stats */}
             <div className="bg-slate-900/40 rounded-2xl p-5 border border-white/5 space-y-4 shadow-inner">
                <div className="flex items-center gap-3">
                   <div className="p-2 bg-slate-800 rounded-lg"><Monitor className="w-4 h-4 text-slate-400" /></div>
                   <div className="flex flex-col">
                      <span className="text-[8px] text-slate-500 font-bold uppercase">Hardware Node</span>
-                     <span className="text-[10px] font-bold text-slate-300">i9-13900K | RTX 4080 | 32GB</span>
+                     <span className="text-[10px] font-bold text-slate-300">RTX 4080 | 32GB RAM</span>
                   </div>
                </div>
                
@@ -80,28 +127,20 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ room, onClose }) => {
                </div>
             </div>
 
-            {/* 3. Payment Status */}
-            <div className="flex items-center justify-between p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
-               <div className="flex items-center gap-3">
-                  <CreditCard className="w-4 h-4 text-emerald-400" />
-                  <span className="text-[10px] font-black italic text-emerald-400 uppercase tracking-widest">Paid: ₩30,000</span>
-               </div>
-               <div className="w-2 h-2 rounded-full bg-emerald-500 glow-green" />
-            </div>
-
-            {/* 4. Action Buttons (Ant Design Style) */}
+            {/* 4. Action Buttons */}
             <div className="space-y-3 pt-4">
-               <div className="grid grid-cols-2 gap-3">
-                  <button className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-xl border border-white/5 text-[10px] font-black uppercase transition-all active:scale-95 shadow-lg">
-                     <Terminal className="w-3.5 h-3.5" /> Remote
-                  </button>
-                  <button className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-xl border border-white/5 text-[10px] font-black uppercase transition-all active:scale-95 shadow-lg">
-                     <Zap className="w-3.5 h-3.5" /> Extend
-                  </button>
-               </div>
-               <button className="w-full flex items-center justify-center gap-3 bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-xl text-xs font-black uppercase tracking-widest shadow-xl shadow-purple-900/20 transition-all active:scale-[0.98]">
-                  <LogOut className="w-4 h-4" /> Final Logout & Close
-               </button>
+               {room.status === 'USING' ? (
+                 <button 
+                  onClick={() => onCheckout(room.id)}
+                  className="w-full flex items-center justify-center gap-3 bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl text-xs font-black uppercase tracking-widest shadow-xl shadow-red-900/20 transition-all active:scale-[0.98]"
+                 >
+                    <LogOut className="w-4 h-4" /> End Session & Checkout
+                 </button>
+               ) : (
+                 <button className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 py-4 rounded-xl border border-white/5 text-[10px] font-black uppercase transition-all shadow-lg">
+                    <Terminal className="w-3.5 h-3.5" /> Maintenance Log
+                 </button>
+               )}
             </div>
           </div>
 

@@ -25,11 +25,11 @@ const RoomCard: React.FC<RoomCardProps> = ({
     <div 
       onClick={onClick}
       className={cn(
-        "aspect-square flex flex-col p-3 rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden relative group",
+        "aspect-square flex flex-col p-3 rounded-2xl border transition-all duration-500 cursor-pointer overflow-hidden relative group",
         "bg-[#161c2e]/60 border-white/5 hover:border-white/20",
-        isUsing && "glow-purple bg-purple-500/5 border-purple-500/30",
-        isError && "glow-red bg-red-500/5 border-red-500/30",
-        isSelected && "ring-2 ring-white/30 border-white/50 scale-[1.02] z-10"
+        isUsing && "glow-purple bg-purple-500/10 border-purple-500/40 shadow-[0_0_20px_rgba(139,92,246,0.15)]",
+        isError && "glow-red bg-red-500/10 border-red-500/40 shadow-[0_0_20px_rgba(239,68,68,0.15)]",
+        isSelected && "ring-2 ring-purple-500/50 border-purple-500/50 scale-[1.02] z-10 shadow-[0_0_30px_rgba(139,92,246,0.3)]"
       )}
     >
       {/* 1. Header: Room ID & Status Dot */}

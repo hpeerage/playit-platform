@@ -16,7 +16,7 @@ const LauncherCard: React.FC<LauncherCardProps> = ({ title, description, icon: I
     <div 
       onClick={onClick}
       className={cn(
-        "group relative flex flex-col justify-end w-[320px] h-[480px] rounded-[32px] overflow-hidden cursor-pointer transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] transform hover:scale-105 hover:z-10",
+        "group relative flex flex-col justify-end w-[320px] h-[480px] rounded-[32px] overflow-hidden cursor-pointer transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] transform hover:scale-105 hover:z-10 active:scale-95 active:duration-75",
         "bg-slate-900/50 border border-white/5 hover:border-purple-500/50 shadow-2xl hover:shadow-[0_40px_80px_rgba(139,92,246,0.3)]"
       )}
     >
