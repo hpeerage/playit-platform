@@ -1,21 +1,39 @@
 import { useState } from 'react';
-import { Gamepad2, ShoppingCart, Headset, UserCircle2, Bell } from 'lucide-react';
+import { Gamepad2, ShoppingCart, Headset, UserCircle2, Bell, Truck } from 'lucide-react';
 import ClientHeader from '../components/client/ClientHeader';
 import LauncherCard from '../components/client/LauncherCard';
 import GameListModal from '../components/client/GameListModal';
 import FoodOrderModal from '../components/client/FoodOrderModal';
 import MyInfoModal from '../components/client/MyInfoModal';
+import DeliveryOrderModal from '../components/client/DeliveryOrderModal';
 import { cn } from '../lib/utils';
+import { supabase } from '../lib/supabase';
 
 const ClientLauncher = () => {
   const [showToast, setShowToast] = useState(false);
   const [isGameModalOpen, setIsGameModalOpen] = useState(false);
   const [isFoodModalOpen, setIsFoodModalOpen] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+  const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
 
-  const handleCallAdmin = () => {
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
+  const handleCallAdmin = async () => {
+    try {
+      setShowToast(true);
+      
+      // 알림 전송 (room_number 1번으로 임시 가정)
+      const { data: rooms } = await supabase.from('rooms').select('id').eq('room_number', 1).single();
+      
+      await supabase.from('notifications').insert({
+        type: 'Call',
+        message: 'Station 1에서 관리자를 호출했습니다.',
+        room_id: rooms?.id,
+        is_read: false
+      });
+
+      setTimeout(() => setShowToast(false), 3000);
+    } catch (error) {
+      console.error('Call Admin failed:', error);
+    }
   };
 
   const menuItems = [
@@ -46,6 +64,13 @@ const ClientLauncher = () => {
       icon: UserCircle2, 
       color: "bg-amber-500",
       onClick: () => setIsInfoModalOpen(true)
+    },
+    { 
+      title: "Delivery Order", 
+      description: "외부 배달 음식 주문 안내", 
+      icon: Truck,
+      color: "bg-purple-500",
+      onClick: () => setIsDeliveryModalOpen(true)
     },
   ];
 
@@ -102,6 +127,11 @@ const ClientLauncher = () => {
       <GameListModal isOpen={isGameModalOpen} onClose={() => setIsGameModalOpen(false)} />
       <FoodOrderModal isOpen={isFoodModalOpen} onClose={() => setIsFoodModalOpen(false)} />
       <MyInfoModal isOpen={isInfoModalOpen} onClose={() => setIsInfoModalOpen(false)} />
+      <DeliveryOrderModal 
+        isOpen={isDeliveryModalOpen} 
+        onClose={() => setIsDeliveryModalOpen(false)} 
+        roomNumber={1} // Temporary fallback or logic to get current room
+      />
 
       {/* Modern Notification Toast */}
       <div className={cn(

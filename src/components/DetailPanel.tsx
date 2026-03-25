@@ -24,14 +24,14 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ room, onClose, onStatusChange
                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Selected Station</span>
                 <span className={cn(
                   "w-1.5 h-1.5 rounded-full glow-green",
-                  room.status === 'USING' ? "bg-emerald-500" : 
-                  room.status === 'MAINTENANCE' ? "bg-red-500" :
-                  room.status === 'CLEANING' ? "bg-blue-500" : "bg-slate-500"
+                  room.status === 'Using' ? "bg-emerald-500" : 
+                  room.status === 'Maintenance' ? "bg-red-500" :
+                  room.status === 'Cleaning' ? "bg-blue-500" : "bg-slate-500"
                 )} />
               </div>
-              <h3 className="text-2xl font-black italic text-white tracking-tighter">PC {room.room_number.padStart(2, '0')} <span className={cn(
+              <h3 className="text-2xl font-black italic text-white tracking-tighter">PC {room.room_number.toString().padStart(2, '0')} <span className={cn(
                 "text-sm not-italic ml-2 lowercase first-letter:uppercase",
-                room.status === 'USING' ? "text-emerald-500" : "text-slate-500"
+                room.status === 'Using' ? "text-emerald-500" : "text-slate-500"
               )}>({room.status})</span></h3>
             </div>
             <button onClick={onClose} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-2xl transition-all group">
@@ -48,37 +48,37 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ room, onClose, onStatusChange
                </div>
                <div className="grid grid-cols-2 gap-2">
                   <button 
-                    onClick={() => onStatusChange(room.id, 'EMPTY')}
+                    onClick={() => onStatusChange(room.id, 'Empty')}
                     className={cn(
                       "flex items-center gap-2 px-4 py-2.5 rounded-xl border text-[9px] font-black uppercase transition-all",
-                      room.status === 'EMPTY' ? "bg-slate-700 border-white/20 text-white" : "bg-white/5 border-white/5 text-slate-400 hover:bg-white/10"
+                      room.status === 'Empty' ? "bg-slate-700 border-white/20 text-white" : "bg-white/5 border-white/5 text-slate-400 hover:bg-white/10"
                     )}
                   >
                     <Trash2 className="w-3 h-3" /> Set Empty
                   </button>
                   <button 
-                    onClick={() => onStatusChange(room.id, 'CLEANING')}
+                    onClick={() => onStatusChange(room.id, 'Cleaning')}
                     className={cn(
                       "flex items-center gap-2 px-4 py-2.5 rounded-xl border text-[9px] font-black uppercase transition-all",
-                      room.status === 'CLEANING' ? "bg-blue-600/40 border-blue-500/50 text-white" : "bg-white/5 border-white/5 text-slate-400 hover:bg-blue-500/20"
+                      room.status === 'Cleaning' ? "bg-blue-600/40 border-blue-500/50 text-white" : "bg-white/5 border-white/5 text-slate-400 hover:bg-blue-500/20"
                     )}
                   >
                     <Activity className="w-3 h-3" /> Cleaning
                   </button>
                   <button 
-                    onClick={() => onStatusChange(room.id, 'MAINTENANCE')}
+                    onClick={() => onStatusChange(room.id, 'Maintenance')}
                     className={cn(
                       "flex items-center gap-2 px-4 py-2.5 rounded-xl border text-[9px] font-black uppercase transition-all",
-                      room.status === 'MAINTENANCE' ? "bg-red-600/40 border-red-500/50 text-white" : "bg-white/5 border-white/5 text-slate-400 hover:bg-red-500/20"
+                      room.status === 'Maintenance' ? "bg-red-600/40 border-red-500/50 text-white" : "bg-white/5 border-white/5 text-slate-400 hover:bg-red-500/20"
                     )}
                   >
                     <Zap className="w-3 h-3" /> Maintenance
                   </button>
                   <button 
-                    onClick={() => onStatusChange(room.id, 'USING')}
+                    onClick={() => onStatusChange(room.id, 'Using')}
                     className={cn(
                       "flex items-center gap-2 px-4 py-2.5 rounded-xl border text-[9px] font-black uppercase transition-all",
-                      room.status === 'USING' ? "bg-emerald-600/40 border-emerald-500/50 text-white" : "bg-white/5 border-white/5 text-slate-400 hover:bg-emerald-500/20"
+                      room.status === 'Using' ? "bg-emerald-600/40 border-emerald-500/50 text-white" : "bg-white/5 border-white/5 text-slate-400 hover:bg-emerald-500/20"
                     )}
                   >
                     <CheckCircle2 className="w-3 h-3" /> Set Using
@@ -87,7 +87,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ room, onClose, onStatusChange
             </div>
 
             {/* 2. User Info (Only if using) */}
-            {room.status === 'USING' && (
+            {room.status === 'Using' && (
               <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-500">
                 <div className="flex justify-between items-center text-[11px] font-bold text-slate-300 uppercase tracking-wider pb-2 border-b border-white/5">
                     <span>Active Session</span>
@@ -129,7 +129,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ room, onClose, onStatusChange
 
             {/* 4. Action Buttons */}
             <div className="space-y-3 pt-4">
-               {room.status === 'USING' ? (
+               {room.status === 'Using' ? (
                  <button 
                   onClick={() => onCheckout(room.id)}
                   className="w-full flex items-center justify-center gap-3 bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl text-xs font-black uppercase tracking-widest shadow-xl shadow-red-900/20 transition-all active:scale-[0.98]"

@@ -8,21 +8,32 @@ import OrderQueueView from '../components/admin/OrderQueueView';
 import SeatMapView from '../components/admin/SeatMapView';
 import ReportsView from '../components/admin/ReportsView';
 import { useRooms } from '../hooks/useRooms';
+import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
 import { LayoutDashboard, Users, ShoppingBag, Monitor, BarChart3, Shield, Settings, Bell, Grid, Map as MapIcon } from 'lucide-react';
 
 const AdminDashboard = () => {
-  const { rooms, stats, updateRoomStatus, checkoutRoom } = useRooms();
+  const { rooms, stats, loading, updateRoomStatus, checkoutRoom } = useRooms();
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [activeMenu, setActiveMenu] = useState('dashboard');
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [pendingOrders, setPendingOrders] = useState(3);
+  const [filter, setFilter] = useState('All');
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Filtered rooms logic
+  const filteredRooms = useMemo(() => {
+    if (filter === 'All') return rooms;
+    if (filter === 'Active') return rooms.filter(r => r.status === 'Using');
+    if (filter === 'Empty') return rooms.filter(r => r.status === 'Empty');
+    if (filter === 'Error') return rooms.filter(r => r.status === 'Maintenance');
+    return rooms;
+  }, [rooms, filter]);
 
   // Simulate real-time order updates
   useEffect(() => {
@@ -32,21 +43,47 @@ const AdminDashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Simulate incoming admin calls
-  const [notifications, setNotifications] = useState<{id: number, message: string}[]>([]);
+  // Real-time notifications from Supabase
+  const [notifications, setNotifications] = useState<{id: string, message: string}[]>([]);
+  
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (Math.random() > 0.85) {
-        const id = Date.now();
-        const station = Math.floor(Math.random() * 54) + 1;
-        setNotifications(prev => [...prev, { id, message: `Station ${station}에서 관리자를 호출했습니다!` }]);
-        setTimeout(() => {
-          setNotifications(prev => prev.filter(n => n.id !== id));
-        }, 8000);
-      }
-    }, 15000);
-    return () => clearInterval(interval);
+    // 1. 초기 미확인 알림 로드
+    const fetchNotifications = async () => {
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('is_read', false)
+        .order('created_at', { ascending: false });
+      if (data) setNotifications(data);
+    };
+    fetchNotifications();
+
+    // 2. 실시간 알림 구독
+    const channel = supabase
+      .channel('realtime_notifications')
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'notifications' 
+      }, (payload: any) => {
+        setNotifications(prev => [payload.new as any, ...prev]);
+        
+        // 브라우저 알림 (선택 사항)
+        if (Notification.permission === 'granted') {
+          new Notification('New Playit Alert', { body: payload.new.message });
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
+
+  const dismissNotification = async (id: string) => {
+    await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
 
   const selectedRoom = useMemo(() => 
     rooms.find(r => r.id === selectedRoomId) || null, 
@@ -68,7 +105,50 @@ const AdminDashboard = () => {
     { id: 'settings', icon: Settings, label: 'Settings' },
   ];
 
+  // Group rooms by Floor and then by Room
+  const floorGroups = useMemo(() => {
+    if (!filteredRooms || filteredRooms.length === 0) return {};
+    
+    return filteredRooms.reduce((acc, room) => {
+      // Safety check for zone parsing
+      const zoneStr = room.zone || "101";
+      const roomNum = parseInt(zoneStr);
+      const floor = isNaN(roomNum) ? 1 : Math.floor(roomNum / 100);
+      const zone = zoneStr;
+      
+      if (!acc[floor]) acc[floor] = {};
+      if (!acc[floor][zone]) acc[floor][zone] = [];
+      acc[floor][zone].push(room);
+      return acc;
+    }, {} as Record<number, Record<string, typeof filteredRooms>>);
+  }, [filteredRooms]);
+
   const renderMainContent = () => {
+    if (loading) {
+      return (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin" />
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Synchronizing Data...</span>
+          </div>
+        </div>
+      );
+    }
+
+    if (filteredRooms.length === 0) {
+      return (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4 max-w-md text-center px-10">
+            <Shield className="w-16 h-16 text-slate-800" />
+            <h3 className="text-xl font-black italic text-white uppercase tracking-tighter">No Units Detected</h3>
+            <p className="text-xs font-bold text-slate-500 leading-relaxed uppercase">
+              The monitoring system is active but no PC units are currently connected to the network. Please verify database synchronization.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     switch (activeMenu) {
       case 'members':
         return <MemberListView />;
@@ -81,45 +161,50 @@ const AdminDashboard = () => {
       default:
         return (
           <div className="flex-1 flex flex-col overflow-hidden relative">
-            <div className="flex-1 grid-container custom-scrollbar transition-all duration-700 pb-10">
-              <div className="col-span-full mb-6 mt-2 flex items-center justify-between px-2">
+            <div className="flex-1 overflow-y-auto custom-scrollbar transition-all duration-700 pb-20">
+              <div className="mb-8 mt-8 flex items-center justify-between px-10">
                  <div>
-                    <h2 className="text-[12px] font-black uppercase tracking-[0.3em] text-slate-500 mb-1">Station Monitoring</h2>
-                    <div className="flex items-center gap-2">
-                       <span className="text-xl font-black italic text-white leading-none">REAL-TIME STATUS</span>
-                       <span className="px-2 py-0.5 bg-purple-500/10 text-purple-400 text-[10px] font-bold rounded-md border border-purple-500/20">{rooms.length} Units</span>
+                    <h2 className="text-[12px] font-black uppercase tracking-[0.4em] text-slate-500 mb-1">Store Layout Monitoring</h2>
+                    <div className="flex items-center gap-3">
+                       <span className="text-2xl font-black italic text-white leading-none uppercase tracking-tighter">Real-Time Floor View</span>
+                       <div className="h-4 w-px bg-white/10" />
+                       <span className="text-purple-400 text-[11px] font-bold uppercase tracking-widest">{filteredRooms.length} Units Connected</span>
                     </div>
                  </div>
                  
                  <div className="flex items-center gap-6">
                     {/* View Switcher */}
-                    <div className="flex bg-slate-900/50 p-1 rounded-xl border border-white/5">
+                    <div className="flex bg-slate-900/50 p-1.5 rounded-xl border border-white/5">
                         <button 
                           onClick={() => setViewMode('grid')}
                           className={cn(
-                            "flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                            "flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
                             viewMode === 'grid' ? "bg-purple-600 text-white shadow-lg shadow-purple-900/40" : "text-slate-500 hover:text-slate-300"
                           )}
                         >
-                          <Grid className="w-3 h-3" /> Grid
+                          <Grid className="w-3.5 h-3.5" /> Room View
                         </button>
                         <button 
                           onClick={() => setViewMode('map')}
                           className={cn(
-                            "flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                            "flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
                             viewMode === 'map' ? "bg-purple-600 text-white shadow-lg shadow-purple-900/40" : "text-slate-500 hover:text-slate-300"
                           )}
                         >
-                          <MapIcon className="w-3 h-3" /> Map
+                          <MapIcon className="w-3.5 h-3.5" /> Map
                         </button>
                     </div>
 
-                    <div className="flex bg-slate-900/50 p-1 rounded-lg border border-white/5 h-fit">
+                    <div className="flex bg-slate-900/50 p-1.5 rounded-xl border border-white/5 h-fit">
                         {['All', 'Active', 'Empty', 'Error'].map((f) => (
-                          <button key={f} className={cn(
-                            "px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all",
-                            f === 'All' ? "bg-slate-800 text-white shadow-sm" : "text-slate-500 hover:text-slate-300"
-                          )}>
+                          <button 
+                            key={f} 
+                            onClick={() => setFilter(f)}
+                            className={cn(
+                              "px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                              f === filter ? "bg-slate-800 text-white shadow-sm" : "text-slate-500 hover:text-slate-300"
+                            )}
+                          >
                             {f}
                           </button>
                         ))}
@@ -127,34 +212,57 @@ const AdminDashboard = () => {
                  </div>
               </div>
 
-              {viewMode === 'grid' ? (
-                <div className={cn(
-                  "col-span-full grid-container-inner transition-all duration-700",
-                  selectedRoomId ? "pr-[380px]" : "pr-0"
-                )}>
-                  {rooms.map((room) => (
-                    <RoomCard
-                      key={room.id}
-                      roomNumber={room.room_number}
-                      status={room.status}
-                      remainingTime="02:45:10"
-                      isSelected={selectedRoomId === room.id}
-                      onClick={() => setSelectedRoomId(room.id)}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className={cn(
-                  "col-span-full transition-all duration-700",
-                  selectedRoomId ? "pr-[380px]" : "pr-0"
-                )}>
+              <div className={cn(
+                "px-10 transition-all duration-700",
+                selectedRoomId ? "pr-[420px]" : "pr-10"
+              )}>
+                {viewMode === 'grid' ? (
+                  Object.entries(floorGroups).sort(([a], [b]) => parseInt(a) - parseInt(b)).map(([floor, rooms]) => (
+                    <div key={floor} className="floor-section">
+                      <div className="floor-label">
+                         <div className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_10px_rgba(139,92,246,0.5)]" />
+                         <span className="floor-label-text">{floor}F Floor</span>
+                         <div className="flex-1 h-px bg-white/5" />
+                      </div>
+                      
+                      <div className="rooms-grid">
+                        {Object.entries(rooms).sort(([a], [b]) => a.localeCompare(b)).map(([zone, zoneRooms]) => (
+                          <div key={zone} className="room-box">
+                             <div className="room-header">
+                                <span className="room-title">
+                                   <Shield className="w-3 h-3 text-purple-500/50" />
+                                   Room {zone}
+                                </span>
+                                <div className="flex gap-1">
+                                   <div className="w-1 h-1 rounded-full bg-slate-700" />
+                                   <div className="w-1 h-1 rounded-full bg-slate-700" />
+                                </div>
+                             </div>
+                             <div className="room-pc-grid">
+                                {zoneRooms.map((room) => (
+                                  <RoomCard
+                                    key={room.id}
+                                    roomNumber={room.room_number}
+                                    status={room.status}
+                                    remainingTime="02:30:00"
+                                    isSelected={selectedRoomId === room.id}
+                                    onClick={() => setSelectedRoomId(room.id)}
+                                  />
+                                ))}
+                             </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                ) : (
                   <SeatMapView 
-                    rooms={rooms}
+                    rooms={filteredRooms}
                     selectedRoomId={selectedRoomId}
                     onRoomClick={(id) => setSelectedRoomId(id)}
                   />
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         );
@@ -206,7 +314,7 @@ const AdminDashboard = () => {
                 <h4 className="text-xs font-black italic text-white uppercase tracking-tighter">Admin Call Received</h4>
                 <p className="text-[10px] font-bold text-slate-400 mt-1 leading-relaxed uppercase">{n.message}</p>
                 <button 
-                  onClick={() => setNotifications(prev => prev.filter(item => item.id !== n.id))}
+                  onClick={() => dismissNotification(n.id)}
                   className="mt-2 text-[9px] font-black text-red-400 uppercase tracking-widest hover:text-red-300 transition-colors"
                 >
                   Dismiss Call

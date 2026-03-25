@@ -1,34 +1,35 @@
 /* src/components/admin/MemberListView.tsx */
 import { useState } from 'react';
-import { Search, Filter, MoreVertical, CreditCard, Clock, User } from 'lucide-react';
+import { Search, Filter, MoreVertical, CreditCard, Clock, User, Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-
-interface Member {
-  id: string;
-  name: string;
-  tier: 'VIP' | 'GOLD' | 'SILVER' | 'NORMAL';
-  points: number;
-  remainingTime: string;
-  lastVisit: string;
-  status: 'ONLINE' | 'OFFLINE';
-}
-
-const MOCK_MEMBERS: Member[] = [
-  { id: '1', name: '김철수', tier: 'VIP', points: 45000, remainingTime: '12:45:00', lastVisit: '2024-03-19', status: 'ONLINE' },
-  { id: '2', name: '이영희', tier: 'GOLD', points: 12000, remainingTime: '05:20:00', lastVisit: '2024-03-18', status: 'OFFLINE' },
-  { id: '3', name: '박지민', tier: 'SILVER', points: 3500, remainingTime: '02:10:00', lastVisit: '2024-03-19', status: 'ONLINE' },
-  { id: '4', name: '최동현', tier: 'NORMAL', points: 800, remainingTime: '00:45:00', lastVisit: '2024-03-15', status: 'OFFLINE' },
-  { id: '5', name: '한소희', tier: 'VIP', points: 89000, remainingTime: '45:00:00', lastVisit: '2024-03-19', status: 'ONLINE' },
-];
+import { useMembers } from '../../hooks/useMembers';
 
 const MemberListView = () => {
+  const { members, loading, error } = useMembers();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterTier, setFilterTier] = useState<string>('All');
+  const [filterRank, setFilterRank] = useState<string>('All');
 
-  const filteredMembers = MOCK_MEMBERS.filter(m => 
-    (filterTier === 'All' || m.tier === filterTier) &&
-    (m.name.includes(searchTerm) || m.id.includes(searchTerm))
+  const filteredMembers = members.filter(m => 
+    (filterRank === 'All' || m.rank.toUpperCase() === filterRank.toUpperCase()) &&
+    (m.name.includes(searchTerm) || m.user_id.includes(searchTerm))
   );
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6">
+        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-6 text-red-500">
+        <p className="text-lg font-bold">Failed to load members</p>
+        <p className="text-sm opacity-60">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col p-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -47,16 +48,16 @@ const MemberListView = () => {
 
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-slate-500 mr-2" />
-          {['All', 'VIP', 'GOLD', 'SILVER', 'NORMAL'].map((tier) => (
+          {['All', 'VIP', 'DIAMOND', 'GOLD', 'SILVER'].map((rank) => (
             <button 
-              key={tier}
-              onClick={() => setFilterTier(tier)}
+              key={rank}
+              onClick={() => setFilterRank(rank)}
               className={cn(
                 "px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                filterTier === tier ? "bg-purple-600 text-white shadow-lg shadow-purple-900/40" : "bg-white/5 text-slate-500 hover:text-slate-300 hover:bg-white/10"
+                filterRank === rank ? "bg-purple-600 text-white shadow-lg shadow-purple-900/40" : "bg-white/5 text-slate-500 hover:text-slate-300 hover:bg-white/10"
               )}
             >
-              {tier}
+              {rank}
             </button>
           ))}
         </div>
@@ -68,7 +69,7 @@ const MemberListView = () => {
           <thead>
             <tr className="bg-slate-950/40 border-b border-white/5">
               <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Member Info</th>
-              <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Tier</th>
+              <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Rank</th>
               <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Points</th>
               <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Remaining Time</th>
               <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Status</th>
@@ -85,19 +86,19 @@ const MemberListView = () => {
                     </div>
                     <div className="flex flex-col">
                       <span className="text-sm font-bold text-white tracking-tight">{member.name}</span>
-                      <span className="text-[10px] font-bold text-slate-600 uppercase tabular-nums">ID: {member.id.padStart(4, '0')}</span>
+                      <span className="text-[10px] font-bold text-slate-600 uppercase tabular-nums">UID: @{member.user_id}</span>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-5">
                   <span className={cn(
                     "px-2.5 py-1 rounded-md text-[9px] font-black tracking-widest uppercase",
-                    member.tier === 'VIP' ? "bg-purple-500/10 text-purple-400 border border-purple-500/20" :
-                    member.tier === 'GOLD' ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" :
-                    member.tier === 'SILVER' ? "bg-slate-400/10 text-slate-300 border border-slate-400/20" :
-                    "bg-slate-800 text-slate-500"
+                    member.rank === 'VIP' ? "bg-purple-500/10 text-purple-400 border border-purple-500/20" :
+                    member.rank === 'Diamond' ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" :
+                    member.rank === 'Gold' ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" :
+                    "bg-slate-800 text-slate-400 border border-white/5"
                   )}>
-                    {member.tier}
+                    {member.rank}
                   </span>
                 </td>
                 <td className="px-6 py-5">
@@ -112,21 +113,16 @@ const MemberListView = () => {
                   <div className="flex items-center gap-2">
                     <Clock className="w-3.5 h-3.5 text-slate-500" />
                     <span className="text-xs font-bold text-slate-300 tabular-nums">
-                      {member.remainingTime}
+                      {member.remaining_time}
                     </span>
                   </div>
                 </td>
                 <td className="px-6 py-5">
                   <div className="flex items-center gap-2">
-                    <div className={cn(
-                      "w-1.5 h-1.5 rounded-full",
-                      member.status === 'ONLINE' ? "bg-emerald-500 glow-green" : "bg-slate-700"
-                    )} />
-                    <span className={cn(
-                      "text-[10px] font-black uppercase tracking-widest",
-                      member.status === 'ONLINE' ? "text-emerald-500" : "text-slate-600"
-                    )}>
-                      {member.status}
+                    {/* 실시간 온라인 상태 구현은 별도의 Presence API가 필요하지만 여기서는 예시로 표시 */}
+                    <div className="w-1.5 h-1.5 rounded-full bg-slate-700" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">
+                      OFFLINE
                     </span>
                   </div>
                 </td>
@@ -137,6 +133,13 @@ const MemberListView = () => {
                 </td>
               </tr>
             ))}
+            {filteredMembers.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-6 py-20 text-center text-slate-600 text-[10px] font-bold uppercase tracking-widest">
+                  No members found
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

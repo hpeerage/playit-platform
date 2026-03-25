@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { X, ShoppingBasket, Plus, Minus, CheckCircle2, UtensilsCrossed, Coffee, Cookie } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { supabase } from '../../lib/supabase';
 
 interface FoodOrderModalProps {
   isOpen: boolean;
@@ -48,13 +49,45 @@ const FoodOrderModal: React.FC<FoodOrderModalProps> = ({ isOpen, onClose }) => {
     return sum + (item?.price || 0) * qty;
   }, 0);
 
-  const handleOrder = () => {
-    setOrdered(true);
-    setTimeout(() => {
+  const handleOrder = async () => {
+    try {
+      setOrdered(true);
+      
+      // 실제 구현 시에는 Context나 Props로부터 room_id, user_id를 가져와야 합니다.
+      // 여기서는 데모를 위해 첫 번째 좌석과 임의의 유저 ID를 사용하거나, 
+      // rooms 테이블에서 현재 좌석 번호에 해당하는 ID를 조회하는 로직이 필요합니다.
+      const { data: rooms } = await supabase.from('rooms').select('id').eq('room_number', 1).single();
+      const roomId = rooms?.id;
+
+      const orderItems = Object.entries(cart).map(([id, qty]) => {
+        const item = MENU_ITEMS.find(m => m.id === Number(id));
+        return {
+          product_id: item?.id,
+          name: item?.name,
+          count: qty,
+          price: item?.price
+        };
+      });
+
+      const { error } = await supabase.from('orders').insert({
+        room_id: roomId,
+        total_price: totalAmount,
+        order_items: orderItems,
+        status: 'Pending'
+      });
+
+      if (error) throw error;
+
+      setTimeout(() => {
+        setOrdered(false);
+        setCart({});
+        onClose();
+      }, 2000);
+    } catch (error) {
+      console.error('Order failed:', error);
+      alert('주문에 실패했습니다. 다시 시도해주세요.');
       setOrdered(false);
-      setCart({});
-      onClose();
-    }, 2000);
+    }
   };
 
   return (

@@ -25,7 +25,7 @@ const SeatMapView: React.FC<SeatMapViewProps> = ({ rooms, selectedRoomId, onRoom
       <div className="min-w-[1000px] space-y-12 pb-20">
         {zones.map(zoneId => {
           const zoneInfo = zoneId === 'VIP' ? getZone(1) : zoneId === 'FPS' ? getZone(13) : getZone(31);
-          const zoneRooms = rooms.filter(r => getZone(parseInt(r.room_number)).id === zoneId);
+          const zoneRooms = rooms.filter(r => getZone(r.room_number).id === zoneId);
 
           return (
             <div key={zoneId} className={cn("p-8 rounded-3xl border border-white/5 relative group transition-all duration-700", zoneInfo.bg)}>
@@ -48,22 +48,22 @@ const SeatMapView: React.FC<SeatMapViewProps> = ({ rooms, selectedRoomId, onRoom
                   >
                     <Monitor className={cn(
                       "w-4 h-4 transition-colors",
-                      room.status === 'USING' ? "text-emerald-400" :
-                      room.status === 'MAINTENANCE' ? "text-red-400" :
-                      room.status === 'CLEANING' ? "text-blue-400" : "text-slate-600"
+                      room.status === 'Using' ? "text-emerald-400" :
+                      room.status === 'Maintenance' ? "text-red-400" :
+                      room.status === 'Cleaning' ? "text-blue-400" : "text-slate-600"
                     )} />
-                    <span className="text-[10px] font-black italic tabular-nums text-white/80">{room.room_number.padStart(2, '0')}</span>
+                    <span className="text-[10px] font-black italic tabular-nums text-white/80">{room.room_number.toString().padStart(2, '0')}</span>
                     
                     {/* Tiny Status Dot */}
                     <div className={cn(
                        "absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full",
-                       room.status === 'USING' ? "bg-emerald-500 glow-green" :
-                       room.status === 'MAINTENANCE' ? "bg-red-500" : "bg-transparent"
+                       room.status === 'Using' ? "bg-emerald-500 glow-green" :
+                       room.status === 'Maintenance' ? "bg-red-500" : "bg-transparent"
                     )} />
 
                     {/* Hover Info Tooltip */}
                     <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-slate-950 px-2 py-1 rounded text-[8px] font-bold text-slate-400 opacity-0 group-hover/seat:opacity-100 transition-opacity whitespace-nowrap z-10 border border-white/10 pointer-events-none">
-                       {room.status === 'USING' ? 'Park Ji-Woo' : room.status}
+                       {room.status === 'Using' ? 'Park Ji-Woo' : room.status}
                     </div>
                   </button>
                 ))}

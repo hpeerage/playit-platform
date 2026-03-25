@@ -1,58 +1,107 @@
 /* src/hooks/useRooms.ts */
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import type { Room, RoomStatus } from '../lib/supabase';
 
-const INITIAL_ROOMS: Room[] = Array.from({ length: 54 }).map((_, i) => ({
-  id: (i + 1).toString(),
-  room_number: (i + 1).toString(),
-  status: (i % 8 === 0) ? 'USING' : (i % 15 === 0) ? 'MAINTENANCE' : 'EMPTY',
-  updated_at: new Date().toISOString()
-}));
-
-
 export const useRooms = () => {
-  const [rooms, setRooms] = useState<Room[]>(INITIAL_ROOMS);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // [REAL-TIME INTEGRATION]
-  // 실제 Supabase 연동 시 useEffect 내에서 실시간 구독을 설정하세요.
-  /*
+  // 1. 초기 데이터 로드 및 실시간 구독 설정
   useEffect(() => {
-    // 1. 초기 데이터 로드: supabase.from('rooms').select('*').then(({ data }) => setRooms(data));
-    // 2. 실시간 구독: 
+    const fetchRooms = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching rooms...', new Date().toISOString());
+        const { data, error } = await supabase
+          .from('rooms')
+          .select('*')
+          .order('room_number', { ascending: true });
+
+        console.log('Supabase Response:', { count: data?.length, error });
+        if (error) throw error;
+        setRooms(data || []);
+      } catch (err: any) {
+        console.error('Error fetching rooms:', err.message);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRooms();
+
+    // 실시간 구독 설정
     const channel = supabase
-      .channel('rooms-all')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms' }, (payload) => {
-        // 데이터 변경 시 setRooms 업데이트 로직 수행
-      })
+      .channel('rooms-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'rooms' },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload;
+          
+          setRooms((prev) => {
+            if (eventType === 'INSERT') {
+              return [...prev, newRecord as Room].sort((a, b) => a.room_number - b.room_number);
+            }
+            if (eventType === 'UPDATE') {
+              return prev.map(room => room.id === (newRecord as Room).id ? (newRecord as Room) : room);
+            }
+            if (eventType === 'DELETE') {
+              return prev.filter(room => room.id !== (oldRecord as { id: string }).id);
+            }
+            return prev;
+          });
+        }
+      )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, []);
-  */
 
-  const updateRoomStatus = useCallback((roomId: string, newStatus: RoomStatus) => {
-    // [SUPABASE UPDATE]
-    // await supabase.from('rooms').update({ status: newStatus }).match({ id: roomId });
-    
-    setRooms(prev => prev.map(room => 
-      room.id === roomId 
-        ? { ...room, status: newStatus, updated_at: new Date().toISOString() } 
-        : room
-    ));
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  const checkoutRoom = useCallback((roomId: string) => {
-    // [SUPABASE CHECKOUT]
-    // 1. 주문 내역 정산 처리: await supabase.from('orders').update({ status: 'Completed' }).match({ room_id: roomId });
-    // 2. 좌석 상태 변경: updateRoomStatus(roomId, 'EMPTY');
-    
-    updateRoomStatus(roomId, 'EMPTY');
-  }, [updateRoomStatus]);
+  const updateRoomStatus = useCallback(async (roomId: string, newStatus: RoomStatus) => {
+    try {
+      const { error } = await supabase
+        .from('rooms')
+        .update({ 
+          status: newStatus,
+          last_status_change: new Date().toISOString()
+        })
+        .eq('id', roomId);
+
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('Error updating room status:', err.message);
+    }
+  }, []);
+
+  const checkoutRoom = useCallback(async (roomId: string) => {
+    try {
+      // 1. 좌석 상태 변경 (Empty로)
+      // 실제 구현 시 주문 내역 확인 등의 추가 로직이 필요할 수 있습니다.
+      const { error } = await supabase
+        .from('rooms')
+        .update({ 
+          status: 'Empty',
+          current_user_id: null,
+          last_status_change: new Date().toISOString()
+        })
+        .eq('id', roomId);
+
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('Error checking out room:', err.message);
+    }
+  }, []);
 
   const stats = useMemo(() => {
-    const using = rooms.filter(r => r.status === 'USING').length;
-    const maintenance = rooms.filter(r => r.status === 'MAINTENANCE').length;
-    const cleaning = rooms.filter(r => r.status === 'CLEANING').length;
-    const empty = rooms.length - using - maintenance - cleaning;
+    const using = rooms.filter(r => r.status === 'Using').length;
+    const maintenance = rooms.filter(r => r.status === 'Maintenance').length;
+    const cleaning = rooms.filter(r => r.status === 'Cleaning').length;
+    const empty = rooms.filter(r => r.status === 'Empty').length;
     
     return { 
       using, 
@@ -66,6 +115,8 @@ export const useRooms = () => {
   return {
     rooms,
     stats,
+    loading,
+    error,
     updateRoomStatus,
     checkoutRoom
   };

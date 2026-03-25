@@ -60,11 +60,14 @@ CREATE INDEX IF NOT EXISTS idx_rooms_status ON public.rooms(status);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
 CREATE INDEX IF NOT EXISTS idx_members_user_id ON public.members(user_id);
 
--- 7. 초기 데이터 예시 (Optional)
--- INSERT INTO public.products (name, category, price) VALUES 
--- ('Cheese Burger Set', 'Food', 12500),
--- ('Iced Americano', 'Drink', 4500),
--- ('Ramen Pack', 'Food', 5500);
+-- 8. 알림 테이블 (Notifications) - 관리자 호출 및 시스템 알림용
+CREATE TABLE IF NOT EXISTS public.notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    type TEXT NOT NULL, -- Call, Order, System
+    message TEXT NOT NULL,
+    room_id UUID REFERENCES public.rooms(id),
+    is_read BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
 
--- INSERT INTO public.rooms (room_number, zone, status) 
--- SELECT i, 'Common', 'Empty' FROM generate_series(1, 54) i;
+CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON public.notifications(is_read);
