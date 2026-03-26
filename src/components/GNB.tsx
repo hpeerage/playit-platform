@@ -1,6 +1,6 @@
 /* src/components/GNB.tsx - Premium Slim Version */
 import React from 'react';
-import { LayoutDashboard, Users, Monitor, BarChart2, Shield, Settings, type LucideIcon } from 'lucide-react';
+import { LayoutDashboard, Users, Monitor, BarChart2, Shield, Settings, Package, type LucideIcon } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface GNBProps {
@@ -15,7 +15,7 @@ const GNB: React.FC<GNBProps> = ({ activeMenu, setActiveMenu }) => {
     { id: 'members', icon: Users, label: 'Members' },
     { id: 'pcstatus', icon: Monitor, label: 'PC Status' },
     { id: 'reports', icon: BarChart2, label: 'Reports' },
-    { id: 'inventory', icon: Shield, label: 'Security' },
+    { id: 'inventory', icon: Package, label: 'Inventory' },
     { id: 'settings', icon: Settings, label: 'Settings' },
   ];
 
