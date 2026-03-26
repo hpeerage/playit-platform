@@ -3,6 +3,13 @@ import { supabase } from '../../lib/supabase';
 import { Package, Plus, Trash2, Check, X, Loader2, Image as ImageIcon, DollarSign } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
+const EMOJI_CATEGORIES = {
+  meal: ['🍜', '🍚', '🍛', '🍱', '🍲', '🍖', '🍗', '🍔', '🍕', '🍟', '🥪', '🌮', '🥟', '🍤', '🍣', '🍢'],
+  drink: ['☕', '🍵', '🥤', '🧋', '🥛', '🍺', '🍹', '🍷', '🍶', '🧉', '🧊', '🍶', '🥂', '🍾', '🥃', '🍹'],
+  snack: ['🍿', '🥨', '🍪', '🍩', '🍰', '🧁', '🥧', '🍫', '🍬', '🍭', '🍮', '🍦', '🍧', '🍨', '🧇', '🥞'],
+  special: ['🍳', '🥖', '🥐', '🥯', '🍴', '🥄', '🥢', '🥘', '🍳', '🥗', '🍓', '🍇', '🍉', '🍌', '🍋', '🍎']
+};
+
 interface Product {
   id: string;
   name: string;
@@ -206,14 +213,43 @@ const ProductManagementView = () => {
               </div>
 
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">Image (Emoji or URL)</label>
-                <input 
-                  type="text"
-                  value={newProduct.image_url}
-                  onChange={e => setNewProduct({...newProduct, image_url: e.target.value})}
-                  className="w-full h-14 bg-slate-800/50 border border-white/5 rounded-2xl px-6 text-white font-bold focus:outline-none focus:border-purple-500 transition-all"
-                  placeholder="🍜 or https://..."
-                />
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">Choose Icon (Emoji)</label>
+                <div className="bg-slate-800/30 border border-white/5 rounded-3xl p-4">
+                  <div className="grid grid-cols-8 gap-2 max-h-[160px] overflow-y-auto custom-scrollbar p-1">
+                    {/* Dynamic emoji list based on category or all */}
+                    {[...EMOJI_CATEGORIES.meal, ...EMOJI_CATEGORIES.drink, ...EMOJI_CATEGORIES.snack, ...EMOJI_CATEGORIES.special].map((emoji, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setNewProduct({...newProduct, image_url: emoji})}
+                        className={cn(
+                          "w-10 h-10 flex items-center justify-center text-xl rounded-xl transition-all",
+                          newProduct.image_url === emoji 
+                            ? "bg-purple-600 scale-110 shadow-lg shadow-purple-900/40" 
+                            : "bg-white/5 hover:bg-white/10"
+                        )}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="mt-4 flex items-center gap-4">
+                   <div className="w-12 h-12 rounded-2xl bg-purple-600/20 flex items-center justify-center text-2xl border border-purple-500/30">
+                     {newProduct.image_url.length < 4 ? newProduct.image_url : '❓'}
+                   </div>
+                   <div className="flex-1">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Selected Icon Preview</p>
+                      <input 
+                        type="text"
+                        value={newProduct.image_url}
+                        onChange={e => setNewProduct({...newProduct, image_url: e.target.value})}
+                        className="w-full bg-transparent border-none p-0 text-white font-black text-sm focus:outline-none"
+                        placeholder="Or enter URL/Emoji manually..."
+                      />
+                   </div>
+                </div>
               </div>
             </div>
 
