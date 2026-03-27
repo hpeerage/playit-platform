@@ -115,13 +115,25 @@ const ProductManagementView = () => {
   };
 
   const deleteProduct = async (id: string) => {
-    if (!confirm('정말 이 상품을 삭제하시겠습니까?')) return;
-    const { error } = await supabase.from('products').delete().eq('id', id);
-    if (error) {
-      console.error('Error deleting product:', error);
-      alert('상품 삭제 중 오류가 발생했습니다: ' + error.message);
-    } else {
-      fetchProducts();
+    console.log('Attempting to delete product:', id);
+    if (!window.confirm('정말 이 상품을 삭제하시겠습니까?')) {
+      console.log('Deletion cancelled by user');
+      return;
+    }
+    
+    try {
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (error) {
+        console.error('Error deleting product from Supabase:', error);
+        alert('상품 삭제 중 오류가 발생했습니다: ' + error.message);
+      } else {
+        console.log('Product deleted successfully');
+        alert('상품이 성공적으로 삭제되었습니다.');
+        fetchProducts();
+      }
+    } catch (err: any) {
+      console.error('Unexpected error during deletion:', err);
+      alert('예상치 못한 오류가 발생했습니다: ' + err.message);
     }
   };
 
