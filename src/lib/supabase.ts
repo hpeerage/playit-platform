@@ -26,6 +26,8 @@ export interface Member {
   rank: 'Silver' | 'Gold' | 'VIP' | 'Diamond';
   points: number;
   remaining_time: string;
+  email?: string;
+  user_id_display?: string;
   created_at: string;
   updated_at: string;
 }

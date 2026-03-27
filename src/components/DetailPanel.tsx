@@ -1,4 +1,4 @@
-import { X, Clock, Monitor, Activity, LogOut, Terminal, Zap, Settings2, Trash2, CheckCircle2 } from 'lucide-react';
+import { X, Clock, Monitor, Activity, LogOut, Terminal, Zap, Settings2, Trash2, CheckCircle2, MessageSquare, ShieldAlert } from 'lucide-react';
 import { cn } from '../lib/utils';
 import type { Room, RoomStatus } from '../lib/supabase';
 
@@ -7,9 +7,23 @@ interface DetailPanelProps {
   onClose: () => void;
   onStatusChange: (roomId: string, status: RoomStatus) => void;
   onCheckout: (roomId: string) => void;
+  onRemoteCommand: (roomId: string, command: 'LOGOUT' | 'MESSAGE', payload?: any) => void;
 }
 
-const DetailPanel: React.FC<DetailPanelProps> = ({ room, onClose, onStatusChange, onCheckout }) => {
+const DetailPanel: React.FC<DetailPanelProps> = ({ room, onClose, onStatusChange, onCheckout, onRemoteCommand }) => {
+  const handleRemoteMessage = () => {
+    const msg = prompt('전송할 메시지를 입력하세요:', '관리자로부터 메시지가 도착했습니다.');
+    if (msg && room) {
+      onRemoteCommand(room.id, 'MESSAGE', { message: msg });
+    }
+  };
+
+  const handleForceLogout = () => {
+    if (room && confirm('정말로 이 좌석을 강제 로그아웃 시키겠습니까?')) {
+      onRemoteCommand(room.id, 'LOGOUT');
+    }
+  };
+
   return (
     <aside className={cn(
       "fixed top-0 right-0 h-full bg-[#0a0f1e] border-l border-white/5 shadow-[-40px_0_60px_rgba(0,0,0,0.8)] z-[2000] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden",
@@ -127,8 +141,32 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ room, onClose, onStatusChange
                </div>
             </div>
 
-            {/* 4. Action Buttons */}
-            <div className="space-y-3 pt-4">
+            {/* 4. Remote Control Actions */}
+            {room.status === 'Using' && (
+              <div className="space-y-3 pt-4 border-t border-white/5">
+                 <div className="flex items-center gap-2 text-[10px] font-black text-rose-500 uppercase tracking-widest mb-3">
+                    <ShieldAlert className="w-3 h-3" />
+                    Remote Control Protocol
+                 </div>
+                 <div className="grid grid-cols-1 gap-3">
+                    <button 
+                      onClick={handleRemoteMessage}
+                      className="w-full flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg transition-all"
+                    >
+                       <MessageSquare className="w-4 h-4" /> Send Remote Message
+                    </button>
+                    <button 
+                      onClick={handleForceLogout}
+                      className="w-full flex items-center justify-center gap-3 bg-slate-800 hover:bg-red-900/40 text-slate-400 hover:text-red-400 py-3 rounded-xl border border-white/5 text-[10px] font-black uppercase tracking-[0.2em] transition-all"
+                    >
+                       <ShieldAlert className="w-4 h-4" /> Force Termination
+                    </button>
+                 </div>
+              </div>
+            )}
+
+            {/* 5. Session Actions */}
+            <div className="space-y-3 pt-6">
                {room.status === 'Using' ? (
                  <button 
                   onClick={() => onCheckout(room.id)}

@@ -1,41 +1,23 @@
 /* src/components/client/MyInfoModal.tsx */
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { X, UserCircle2, Award, Clock, History, CreditCard, TrendingUp } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
-import type { Member } from '../../lib/supabase';
 
 interface MyInfoModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const MyInfoModal: React.FC<MyInfoModalProps> = ({ isOpen, onClose }) => {
-  const [member, setMember] = useState<Member | null>(null);
-  const [loading, setLoading] = useState(true);
+import { useAuth } from '../../hooks/useAuth';
 
-  useEffect(() => {
-    if (isOpen) {
-      const fetchMember = async () => {
-        setLoading(true);
-        try {
-          // 실제 운영 시에는 로그인된 유저의 ID를 사용해야 함
-          const { data, error } = await supabase
-            .from('members')
-            .select('*')
-            .limit(1)
-            .single();
-          
-          if (error) throw error;
-          if (data) setMember(data);
-        } catch (err) {
-          console.error('Fetch member failed:', err);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchMember();
+const MyInfoModal: React.FC<MyInfoModalProps> = ({ isOpen, onClose }) => {
+  const { member, loading, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    if (confirm('Connections을 해제하시겠습니까?')) {
+      await signOut();
+      onClose();
     }
-  }, [isOpen]);
+  };
 
   if (!isOpen) return null;
 
@@ -133,7 +115,12 @@ const MyInfoModal: React.FC<MyInfoModalProps> = ({ isOpen, onClose }) => {
            <p className="text-[9px] font-bold text-slate-600 uppercase tracking-[0.3em]">Account secured by Playit Multi-Factor Authentication</p>
            <div className="flex gap-4">
               <button className="px-6 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-[10px] font-black uppercase tracking-widest text-white transition-all border border-white/10">Edit Profile</button>
-              <button className="px-6 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-[10px] font-black uppercase tracking-widest text-red-500 transition-all border border-red-500/20">End Session</button>
+              <button 
+                onClick={handleSignOut}
+                className="px-6 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-[10px] font-black uppercase tracking-widest text-red-500 transition-all border border-red-500/20"
+              >
+                End Session
+              </button>
            </div>
         </div>
       </div>

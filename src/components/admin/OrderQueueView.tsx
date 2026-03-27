@@ -4,7 +4,7 @@ import { cn } from '../../lib/utils';
 import { useOrders } from '../../hooks/useOrders';
 
 const OrderQueueView = () => {
-  const { orders, loading, error, updateOrderStatus } = useOrders();
+  const { orders, loading, error, updateOrderStatus, cancelOrder } = useOrders();
 
   if (loading) {
     return (
@@ -108,10 +108,11 @@ const OrderQueueView = () => {
                   {order.status === 'Pending' ? 'Set Processing' : 'Set Completed'}
                 </button>
                 <button 
-                  onClick={() => updateOrderStatus(order.id, 'Cancelled')}
-                  className="px-4 py-3 bg-white/5 border border-white/5 rounded-xl text-slate-600 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-all flex items-center justify-center"
+                  onClick={() => cancelOrder(order.id)}
+                  className="px-4 py-3 bg-white/5 border border-white/5 rounded-xl text-slate-600 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-all flex items-center justify-center group/cancel"
                 >
                   <XCircle className="w-4 h-4" />
+                  <span className="max-w-0 overflow-hidden group-hover/cancel:max-w-xs group-hover/cancel:ml-2 text-[8px] font-black uppercase transition-all duration-300">Refund</span>
                 </button>
               </div>
             )}

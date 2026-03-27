@@ -60,10 +60,17 @@ export const useOrders = () => {
     if (error) console.error('Error updating order status:', error.message);
   }, []);
 
+  const cancelOrder = useCallback(async (orderId: string) => {
+    const { data, error } = await supabase.rpc('cancel_order', { p_order_id: orderId });
+    if (error) console.error('Error cancelling order:', error.message);
+    if (data && !data.success) console.error('Refund failed:', data.message);
+  }, []);
+
   return {
     orders,
     loading,
     error,
-    updateOrderStatus
+    updateOrderStatus,
+    cancelOrder
   };
 };

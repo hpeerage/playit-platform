@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Package, Plus, Trash2, Check, X, Loader2, DollarSign, Upload } from 'lucide-react';
+import { Package, Plus, Trash2, Check, X, Loader2, DollarSign, Upload, Edit2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 const EMOJI_CATEGORIES = {
@@ -24,12 +24,13 @@ const ProductManagementView = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [newProduct, setNewProduct] = useState({
     name: '',
     category: 'meal',
     price: 0,
-    image_url: '🍜', // Default to emoji or URL
+    image_url: '🍜',
     is_available: true,
     stock: -1
   });
@@ -94,17 +95,45 @@ const ProductManagementView = () => {
     fetchProducts();
   }, []);
 
-  const handleAddProduct = async (e: React.FormEvent) => {
+  const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error: insertError } = await supabase.from('products').insert([newProduct]);
-    if (insertError) {
-      console.error('Error adding product:', insertError);
-      alert('상품 등록 중 오류가 발생했습니다.');
-      return;
+    if (editingProduct) {
+      const { error: updateError } = await supabase
+        .from('products')
+        .update(newProduct)
+        .eq('id', editingProduct.id);
+      if (updateError) {
+        alert('상품 수정 중 오류가 발생했습니다.');
+        return;
+      }
+    } else {
+      const { error: insertError } = await supabase.from('products').insert([newProduct]);
+      if (insertError) {
+        alert('상품 등록 중 오류가 발생했습니다.');
+        return;
+      }
     }
-    setIsAdding(false);
-    setNewProduct({ name: '', category: 'meal', price: 0, image_url: '🍜', is_available: true, stock: -1 });
+    closeModal();
     fetchProducts();
+  };
+
+  const openEditModal = (product: Product) => {
+    setEditingProduct(product);
+    setNewProduct({
+      name: product.name,
+      category: product.category,
+      price: product.price,
+      image_url: product.image_url,
+      is_available: product.is_available,
+      stock: product.stock
+    });
+    setIsAdding(true);
+  };
+
+  const closeModal = () => {
+    setIsAdding(false);
+    setEditingProduct(null);
+    setNewProduct({ name: '', category: 'meal', price: 0, image_url: '🍜', is_available: true, stock: -1 });
   };
 
   const toggleAvailability = async (id: string, currentStatus: boolean) => {
@@ -194,6 +223,13 @@ const ProductManagementView = () => {
 
                 <div className="flex items-center gap-2">
                   <button 
+                    onClick={() => openEditModal(product)}
+                    className="w-10 h-10 rounded-xl bg-slate-800 border border-white/5 text-slate-500 hover:bg-purple-600 hover:text-white hover:border-purple-500/50 flex items-center justify-center transition-all"
+                    title="Edit Product"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button 
                     onClick={() => toggleAvailability(product.id, product.is_available)}
                     className={cn(
                       "w-10 h-10 rounded-xl flex items-center justify-center border transition-all",
@@ -218,15 +254,17 @@ const ProductManagementView = () => {
         </div>
       )}
 
-      {/* Add Product Modal */}
-      {isAdding && (
+      {/* Add/Edit Product Modal */}
+       {isAdding && (
         <div className="fixed inset-0 z-[4000] flex items-center justify-center p-6">
-          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setIsAdding(false)} />
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={closeModal} />
           <form 
-            onSubmit={handleAddProduct}
+            onSubmit={handleSaveProduct}
             className="relative w-full max-w-lg bg-slate-900 border border-white/10 rounded-[40px] p-10 shadow-2xl animate-in zoom-in-95 duration-300"
           >
-            <h3 className="text-2xl font-black italic text-white uppercase tracking-tighter mb-8">Register New Product</h3>
+            <h3 className="text-2xl font-black italic text-white uppercase tracking-tighter mb-8">
+              {editingProduct ? 'Edit Product Details' : 'Register New Product'}
+            </h3>
             
             <div className="space-y-6">
               <div>
@@ -345,9 +383,9 @@ const ProductManagementView = () => {
             </div>
 
             <div className="flex gap-4 mt-10">
-              <button 
+               <button 
                 type="button"
-                onClick={() => setIsAdding(false)}
+                onClick={closeModal}
                 className="flex-1 h-16 rounded-2xl border border-white/5 text-slate-500 text-[11px] font-black uppercase tracking-widest hover:bg-white/5 transition-all"
               >
                 Cancel
@@ -356,7 +394,7 @@ const ProductManagementView = () => {
                 type="submit"
                 className="flex-[2] h-16 rounded-2xl bg-purple-600 text-white text-[11px] font-black uppercase tracking-widest shadow-[0_10px_30px_rgba(139,92,246,0.3)] hover:bg-purple-500 transition-all"
               >
-                Confirm Registration
+                {editingProduct ? 'Save Changes' : 'Confirm Registration'}
               </button>
             </div>
           </form>

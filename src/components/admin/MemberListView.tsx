@@ -1,18 +1,27 @@
 /* src/components/admin/MemberListView.tsx */
 import { useState } from 'react';
-import { Search, Filter, MoreVertical, CreditCard, Clock, User, Loader2 } from 'lucide-react';
+import { Search, Filter, CreditCard, Clock, User, Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useMembers } from '../../hooks/useMembers';
+import PointChargeModal from './PointChargeModal';
+import type { Member } from '../../lib/supabase';
 
 const MemberListView = () => {
-  const { members, loading, error } = useMembers();
+  const { members, loading, error, refresh } = useMembers();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRank, setFilterRank] = useState<string>('All');
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [isChargeModalOpen, setIsChargeModalOpen] = useState(false);
 
   const filteredMembers = members.filter(m => 
     (filterRank === 'All' || m.rank.toUpperCase() === filterRank.toUpperCase()) &&
-    (m.name.includes(searchTerm) || m.user_id.includes(searchTerm))
+    (m.name.toLowerCase().includes(searchTerm.toLowerCase()) || m.user_id.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const handleOpenCharge = (member: Member) => {
+    setSelectedMember(member);
+    setIsChargeModalOpen(true);
+  };
 
   if (loading) {
     return (
@@ -86,7 +95,7 @@ const MemberListView = () => {
                     </div>
                     <div className="flex flex-col">
                       <span className="text-sm font-bold text-white tracking-tight">{member.name}</span>
-                      <span className="text-[10px] font-bold text-slate-600 uppercase tabular-nums">UID: @{member.user_id}</span>
+                      <span className="text-[10px] font-bold text-slate-600 uppercase tabular-nums">UID: @{member.user_id_display || member.user_id.split('-')[0]}</span>
                     </div>
                   </div>
                 </td>
@@ -119,7 +128,6 @@ const MemberListView = () => {
                 </td>
                 <td className="px-6 py-5">
                   <div className="flex items-center gap-2">
-                    {/* 실시간 온라인 상태 구현은 별도의 Presence API가 필요하지만 여기서는 예시로 표시 */}
                     <div className="w-1.5 h-1.5 rounded-full bg-slate-700" />
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">
                       OFFLINE
@@ -127,8 +135,11 @@ const MemberListView = () => {
                   </div>
                 </td>
                 <td className="px-6 py-5 text-right">
-                  <button className="p-2 hover:bg-white/5 rounded-lg transition-colors">
-                    <MoreVertical className="w-4 h-4 text-slate-500" />
+                  <button 
+                    onClick={() => handleOpenCharge(member)}
+                    className="px-4 py-2 bg-purple-600/10 hover:bg-purple-600/20 text-[10px] font-black uppercase tracking-widest text-purple-400 border border-purple-500/20 rounded-xl transition-all"
+                  >
+                    Charge
                   </button>
                 </td>
               </tr>
@@ -143,6 +154,16 @@ const MemberListView = () => {
           </tbody>
         </table>
       </div>
+
+      <PointChargeModal 
+        isOpen={isChargeModalOpen}
+        onClose={() => setIsChargeModalOpen(false)}
+        member={selectedMember}
+        onSuccess={() => {
+          if (refresh) refresh();
+          else window.location.reload();
+        }}
+      />
     </div>
   );
 };

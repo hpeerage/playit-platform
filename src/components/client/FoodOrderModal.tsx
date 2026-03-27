@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { X, ShoppingBasket, Plus, Minus, CheckCircle2, UtensilsCrossed, Coffee, Cookie, Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
 
 interface FoodOrderModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ const CATEGORIES = [
 ];
 
 const FoodOrderModal: React.FC<FoodOrderModalProps> = ({ isOpen, onClose }) => {
+  const { user, member } = useAuth();
   const [activeCategory, setActiveCategory] = useState('meal');
   const [cart, setCart] = useState<{[key: string]: number}>({});
   const [ordered, setOrdered] = useState(false);
@@ -59,12 +61,20 @@ const FoodOrderModal: React.FC<FoodOrderModalProps> = ({ isOpen, onClose }) => {
   }, 0);
 
   const handleOrder = async () => {
+    if (!user || !member) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    if (member.points < totalAmount) {
+      alert(`포인트가 부족합니다. (보유: ${member.points.toLocaleString()} PT)`);
+      return;
+    }
+
     try {
       setOrdered(true);
       
-      // 실제 구현 시에는 Context나 Props로부터 room_id, user_id를 가져와야 합니다.
-      // 여기서는 데모를 위해 첫 번째 좌석과 임의의 유저 ID를 사용하거나, 
-      // rooms 테이블에서 현재 좌석 번호에 해당하는 ID를 조회하는 로직이 필요합니다.
+      // 방 번호 조회 (데모용으로 1번 좌석 고정)
       const { data: rooms } = await supabase.from('rooms').select('id').eq('room_number', 1).single();
       const roomId = rooms?.id;
 
@@ -78,23 +88,27 @@ const FoodOrderModal: React.FC<FoodOrderModalProps> = ({ isOpen, onClose }) => {
         };
       });
 
-      const { error } = await supabase.from('orders').insert({
-        room_id: roomId,
-        total_price: totalAmount,
-        order_items: orderItems,
-        status: 'Pending'
+      // 포인트 차감 및 주문 생성을 처리하는 RPC 호출 (트랜잭션 보장)
+      const { data, error } = await supabase.rpc('pay_order', {
+        p_user_id: user.id,
+        p_room_id: roomId,
+        p_total_price: totalAmount,
+        p_order_items: orderItems
       });
 
       if (error) throw error;
+      if (data && !data.success) {
+        throw new Error(data.message || 'Payment failed');
+      }
 
       setTimeout(() => {
         setOrdered(false);
         setCart({});
         onClose();
       }, 2000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Order failed:', error);
-      alert('주문에 실패했습니다. 다시 시도해주세요.');
+      alert(error.message || '주문에 실패했습니다. 포인트 잔액을 확인해주세요.');
       setOrdered(false);
     }
   };
@@ -203,9 +217,15 @@ const FoodOrderModal: React.FC<FoodOrderModalProps> = ({ isOpen, onClose }) => {
           </div>
 
           <div className="p-8 bg-slate-900 border-t border-white/10 space-y-6">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total cost</span>
-              <span className="text-2xl font-black text-white italic tracking-tighter">{totalAmount.toLocaleString()}원</span>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Holding Credits</span>
+                <span className="text-xs font-black text-emerald-400">{(member?.points || 0).toLocaleString()} PT</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total cost</span>
+                <span className="text-2xl font-black text-white italic tracking-tighter">{totalAmount.toLocaleString()}원</span>
+              </div>
             </div>
             
             <button 
