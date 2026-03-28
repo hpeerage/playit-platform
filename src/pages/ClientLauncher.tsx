@@ -1,5 +1,5 @@
 /* src/pages/ClientLauncher.tsx */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Gamepad2, ShoppingBag, Headset, User, Bell, Truck } from 'lucide-react';
 import ClientHeader from '../components/client/ClientHeader';
 import LauncherCard from '../components/client/LauncherCard';
@@ -10,6 +10,7 @@ import DeliveryOrderModal from '../components/client/DeliveryOrderModal';
 import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { useTimer } from '../hooks/useTimer';
 
 const ClientLauncher = () => {
   const { user, member } = useAuth();
@@ -20,6 +21,9 @@ const ClientLauncher = () => {
   const [isFoodModalOpen, setIsFoodModalOpen] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
+
+  const { formattedTime, timeLeft, isExpired } = useTimer(member?.remaining_time || null);
+  const warningShownRef = useRef({ fiveMin: false, tenMin: false });
 
   // 실시간 주문 상태 감지
   useEffect(() => {
@@ -52,6 +56,46 @@ const ClientLauncher = () => {
       supabase.removeChannel(channel);
     };
   }, [user]);
+
+  // 저시간 경고 및 자동 로그아웃 (WBS 104)
+  useEffect(() => {
+    if (!user) return;
+
+    if (isExpired && timeLeft === 0) {
+      setToastConfig({
+        title: 'SESSION EXPIRED',
+        message: '남은 시간이 모두 소진되었습니다. 3초 후 로그아웃됩니다.'
+      });
+      setShowToast(true);
+      setTimeout(() => {
+        supabase.auth.signOut();
+        window.location.href = '/login';
+      }, 3000);
+      return;
+    }
+
+    // 10분 경고 (600초)
+    if (timeLeft <= 600 && timeLeft > 590 && !warningShownRef.current.tenMin) {
+      setToastConfig({
+        title: 'TIME WARNING',
+        message: '남은 시간이 10분 미만입니다. 충전이 필요하신지 확인해주세요!'
+      });
+      setShowToast(true);
+      warningShownRef.current.tenMin = true;
+      setTimeout(() => setShowToast(false), 8000);
+    }
+
+    // 5분 경고 (300초)
+    if (timeLeft <= 300 && timeLeft > 290 && !warningShownRef.current.fiveMin) {
+      setToastConfig({
+        title: 'TIME CRITICAL',
+        message: '남은 시간이 5분 미만입니다. 곧 세션이 종료됩니다.'
+      });
+      setShowToast(true);
+      warningShownRef.current.fiveMin = true;
+      setTimeout(() => setShowToast(false), 8000);
+    }
+  }, [timeLeft, isExpired, user]);
 
   // 원격 명령 구독 (WBS 3단계)
   useEffect(() => {
@@ -213,7 +257,7 @@ const ClientLauncher = () => {
                 <div className="flex flex-col">
                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Terminal Session</span>
                    <span className="text-sm font-bold text-slate-400 uppercase italic tabular-nums tracking-tighter">
-                     {member?.remaining_time || '00:00:00'} LEFT
+                     {formattedTime} LEFT
                    </span>
                 </div>
              </div>

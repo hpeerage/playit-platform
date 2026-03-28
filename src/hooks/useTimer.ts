@@ -27,7 +27,8 @@ const formatSecondsToInterval = (totalSeconds: number): string => {
 
 export const useTimer = (initialInterval: string | null) => {
   const [timeLeft, setTimeLeft] = useState<number>(() => parseIntervalToSeconds(initialInterval));
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<any>(null);
+
 
   // 초기값 변경 시 상태 업데이트
   useEffect(() => {
