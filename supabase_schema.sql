@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
 -- 6. 인덱스 설정 (조회 성능 최적화)
 CREATE INDEX IF NOT EXISTS idx_rooms_status ON public.rooms(status);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_created_at ON public.orders(created_at);
 CREATE INDEX IF NOT EXISTS idx_members_user_id ON public.members(user_id);
 
 -- 8. 알림 테이블 (Notifications) - 관리자 호출 및 시스템 알림용

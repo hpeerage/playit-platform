@@ -17,7 +17,7 @@ const ChatView = () => {
   const [activeChats, setActiveChats] = useState<ActiveChat[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState('');
-  const { messages, sendMessage, markAsRead, loading: chatLoading } = useChat(selectedRoomId);
+  const { messages, sendMessage, markAsRead } = useChat(selectedRoomId);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // 활성 채팅 목록 불러오기 (메시지가 있는 방들)
@@ -72,10 +72,9 @@ const ChatView = () => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
     if (selectedRoomId) {
-      // 관리자가 채팅방을 열면 읽음 처리 (필요 시 수정)
-      // markAsRead(); 
+      markAsRead(); 
     }
-  }, [messages, selectedRoomId]);
+  }, [messages, selectedRoomId, markAsRead]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();

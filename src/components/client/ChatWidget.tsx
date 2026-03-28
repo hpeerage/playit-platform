@@ -1,6 +1,6 @@
 /* src/components/client/ChatWidget.tsx */
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Send, X, User, ShieldCheck } from 'lucide-react';
+import { MessageSquare, Send, X, ShieldCheck } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useChat } from '../../hooks/useChat';
 import type { Member } from '../../lib/supabase';
