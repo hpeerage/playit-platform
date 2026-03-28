@@ -11,10 +11,13 @@ import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useTimer } from '../hooks/useTimer';
+import ChatWidget from '../components/client/ChatWidget';
 
 const ClientLauncher = () => {
   const { user, member } = useAuth();
+  const [roomId, setRoomId] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
+
   const [toastConfig, setToastConfig] = useState<{title: string, message: string} | null>(null);
   
   const [isGameModalOpen, setIsGameModalOpen] = useState(false);
@@ -104,6 +107,8 @@ const ClientLauncher = () => {
     const setupCommandSubscription = async () => {
       const { data: roomData } = await supabase.from('rooms').select('id').eq('room_number', 1).single();
       if (!roomData) return;
+      setRoomId(roomData.id);
+
 
       const channel = supabase
         .channel(`remote-ctrl-${roomData.id}`)
@@ -278,6 +283,8 @@ const ClientLauncher = () => {
         onClose={() => setIsDeliveryModalOpen(false)} 
         roomNumber={1} 
       />
+
+      <ChatWidget roomId={roomId} member={member} />
 
       {/* Modern Notification Toast */}
       <div className={cn(

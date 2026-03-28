@@ -8,10 +8,12 @@ import OrderQueueView from '../components/admin/OrderQueueView';
 import SeatMapView from '../components/admin/SeatMapView';
 import ReportsView from '../components/admin/ReportsView';
 import ProductManagementView from '../components/admin/ProductManagementView';
+import ChatView from '../components/admin/ChatView';
 import { useRooms } from '../hooks/useRooms';
 import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
-import { LayoutDashboard, Users, ShoppingBag, Monitor, BarChart3, Settings, Bell, Grid, Map as MapIcon, X, Package } from 'lucide-react';
+import { LayoutDashboard, Users, ShoppingBag, Monitor, BarChart3, Settings, Bell, Grid, Map as MapIcon, X, Package, MessageSquare } from 'lucide-react';
+
 
 const AdminDashboard = () => {
   const { rooms, stats, loading, updateRoomStatus, checkoutRoom, sendRemoteCommand } = useRooms();
@@ -110,8 +112,10 @@ const AdminDashboard = () => {
     { id: 'reports', icon: BarChart3, label: 'Reports' },
     { id: 'pcstatus', icon: Monitor, label: 'PC Status' },
     { id: 'inventory', icon: Package, label: 'Inventory' },
+    { id: 'support', icon: MessageSquare, label: 'Support' },
     { id: 'settings', icon: Settings, label: 'Settings' },
   ];
+
 
   const floorGroups = useMemo(() => {
     if (!filteredRooms || filteredRooms.length === 0) return {};
@@ -144,7 +148,9 @@ const AdminDashboard = () => {
       case 'orders': return <OrderQueueView />;
       case 'reports': return <ReportsView />;
       case 'inventory': return <ProductManagementView />;
+      case 'support': return <ChatView />;
       case 'dashboard':
+
       case 'pcstatus':
       default:
         return (
