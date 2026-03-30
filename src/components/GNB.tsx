@@ -1,6 +1,6 @@
 /* src/components/GNB.tsx - Premium Slim Version */
 import React from 'react';
-import { LayoutDashboard, Users, Monitor, BarChart2, Shield, Settings, Package, type LucideIcon } from 'lucide-react';
+import { LayoutDashboard, Users, Monitor, BarChart2, Shield, Settings, Package, MessageSquare, type LucideIcon } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface GNBProps {
@@ -9,15 +9,8 @@ interface GNBProps {
   items: { id: string, icon: LucideIcon, label: string }[];
 }
 
-const GNB: React.FC<GNBProps> = ({ activeMenu, setActiveMenu }) => {
-  const menuItems = [
-    { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { id: 'members', icon: Users, label: 'Members' },
-    { id: 'pcstatus', icon: Monitor, label: 'PC Status' },
-    { id: 'reports', icon: BarChart2, label: 'Reports' },
-    { id: 'inventory', icon: Package, label: 'Inventory' },
-    { id: 'settings', icon: Settings, label: 'Settings' },
-  ];
+const GNB: React.FC<GNBProps> = ({ activeMenu, setActiveMenu, items }) => {
+  const menuItems = items;
 
   return (
     <nav className="fixed left-0 top-0 bottom-0 w-[80px] hover:w-[220px] bg-[#020617] border-r border-white/5 z-[3000] flex flex-col items-center py-6 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group/gnb shadow-2xl">

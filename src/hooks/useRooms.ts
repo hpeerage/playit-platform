@@ -81,7 +81,7 @@ export const useRooms = () => {
     if (error) console.error('Error checking out room:', error.message);
   };
 
-  const sendRemoteCommand = async (roomId: string, command: 'LOGOUT' | 'MESSAGE', payload: any = {}) => {
+  const sendRemoteCommand = async (roomId: string, command: 'LOGOUT' | 'MESSAGE' | 'LOGIN_BYPASS', payload: any = {}) => {
     const { error } = await supabase
       .from('remote_commands')
       .insert({

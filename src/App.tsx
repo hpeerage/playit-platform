@@ -45,12 +45,14 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !user) {
+    const isGuest = sessionStorage.getItem('isGuestSession') === 'true';
+    if (!loading && !user && !isGuest) {
       navigate('/login', { replace: true });
     }
   }, [user, loading, navigate]);
 
-  if (loading || !user) {
+  const isGuest = sessionStorage.getItem('isGuestSession') === 'true';
+  if (loading || (!user && !isGuest)) {
     return (
       <div className="min-h-screen bg-[#020617] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">

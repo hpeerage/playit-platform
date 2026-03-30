@@ -7,7 +7,7 @@ interface DetailPanelProps {
   onClose: () => void;
   onStatusChange: (roomId: string, status: RoomStatus) => void;
   onCheckout: (roomId: string) => void;
-  onRemoteCommand: (roomId: string, command: 'LOGOUT' | 'MESSAGE', payload?: any) => void;
+  onRemoteCommand: (roomId: string, command: 'LOGOUT' | 'MESSAGE' | 'LOGIN_BYPASS', payload?: any) => void;
 }
 
 const DetailPanel: React.FC<DetailPanelProps> = ({ room, onClose, onStatusChange, onCheckout, onRemoteCommand }) => {
@@ -21,6 +21,13 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ room, onClose, onStatusChange
   const handleForceLogout = () => {
     if (room && confirm('정말로 이 좌석을 강제 로그아웃 시키겠습니까?')) {
       onRemoteCommand(room.id, 'LOGOUT');
+    }
+  };
+
+  const handleManualLogin = () => {
+    if (room && confirm('이 좌석을 수동으로 로그인 시키겠습니까? (데모용)')) {
+      onStatusChange(room.id, 'Using');
+      onRemoteCommand(room.id, 'LOGIN_BYPASS');
     }
   };
 
@@ -157,7 +164,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ room, onClose, onStatusChange
                     </button>
                     <button 
                       onClick={handleForceLogout}
-                      className="w-full flex items-center justify-center gap-3 bg-slate-800 hover:bg-red-900/40 text-slate-400 hover:text-red-400 py-3 rounded-xl border border-white/5 text-[10px] font-black uppercase tracking-[0.2em] transition-all"
+                      className="w-full flex items-center justify-center gap-3 bg-slate-800 hover:bg-red-900/40 text-slate-400 hover:text-red-400 py-3 rounded-xl border border-white/5 text-[10px) font-black uppercase tracking-[0.2em] transition-all"
                     >
                        <ShieldAlert className="w-4 h-4" /> Force Termination
                     </button>
@@ -175,9 +182,17 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ room, onClose, onStatusChange
                     <LogOut className="w-4 h-4" /> End Session & Checkout
                  </button>
                ) : (
-                 <button className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 py-4 rounded-xl border border-white/5 text-[10px] font-black uppercase transition-all shadow-lg">
-                    <Terminal className="w-3.5 h-3.5" /> Maintenance Log
-                 </button>
+                 <div className="grid grid-cols-1 gap-3">
+                    <button 
+                      onClick={handleManualLogin}
+                      className="w-full flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-900/20 transition-all active:scale-[0.98]"
+                    >
+                        <Zap className="w-4 h-4" /> Manual Activation
+                    </button>
+                    <button className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 py-4 rounded-xl border border-white/5 text-[10px] font-black uppercase transition-all shadow-lg">
+                        <Terminal className="w-3.5 h-3.5" /> Maintenance Log
+                    </button>
+                 </div>
                )}
             </div>
           </div>

@@ -207,9 +207,9 @@ const ReportsView = () => {
             </div>
           </div>
 
-          <div className="bg-slate-900/40 border border-white/5 p-10 rounded-[50px] shadow-2xl h-[450px]">
+          <div className="bg-slate-900/40 border border-white/5 p-10 rounded-[50px] shadow-2xl h-[450px] flex flex-col">
             <h3 className="text-xl font-black italic text-white uppercase tracking-tighter mb-10">Velocity Performance</h3>
-            <div className="w-full h-full pb-20">
+            <div className="flex-1 w-full min-h-0">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={revenueData}>
                   <defs>

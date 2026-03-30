@@ -15,6 +15,18 @@ import ChatWidget from '../components/client/ChatWidget';
 
 const ClientLauncher = () => {
   const { user, member } = useAuth();
+  const isGuest = sessionStorage.getItem('isGuestSession') === 'true';
+  const displayMember = (member || (isGuest ? {
+    id: 'guest',
+    user_id: 'guest',
+    name: 'DEMO_USER',
+    remaining_time: '36000',
+    points: 1250,
+    rank: 'Silver',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  } : null)) as any;
+
   const [roomId, setRoomId] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
 
@@ -25,22 +37,22 @@ const ClientLauncher = () => {
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
 
-  const { formattedTime, timeLeft, isExpired } = useTimer(member?.remaining_time || null);
+  const { formattedTime, timeLeft, isExpired } = useTimer(displayMember?.remaining_time || null);
   const warningShownRef = useRef({ fiveMin: false, tenMin: false });
 
   // 실시간 주문 상태 감지
   useEffect(() => {
-    if (!user) return;
+    if (!user && !isGuest) return;
 
     const channel = supabase
-      .channel(`user-orders-${user.id}`)
+      .channel(`user-orders-${user?.id || 'guest'}`)
       .on(
         'postgres_changes',
         { 
           event: 'UPDATE', 
           schema: 'public', 
           table: 'orders',
-          filter: `user_id=eq.${user.id}`
+          filter: user ? `user_id=eq.${user.id}` : undefined
         },
         (payload: any) => {
           if (payload.new.status === 'Completed' && payload.old.status !== 'Completed') {
@@ -58,12 +70,14 @@ const ClientLauncher = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, isGuest]);
 
   // 저시간 경고 및 자동 로그아웃 (WBS 104)
   useEffect(() => {
-    if (!user) return;
+    if (!user && !isGuest) return;
 
+    /* 
+    // 데모 버전을 위해 자동 로그아웃 기능 일시 중지 (향후 재활성화 필요)
     if (isExpired && timeLeft === 0) {
       setToastConfig({
         title: 'SESSION EXPIRED',
@@ -76,6 +90,7 @@ const ClientLauncher = () => {
       }, 3000);
       return;
     }
+    */
 
     // 10분 경고 (600초)
     if (timeLeft <= 600 && timeLeft > 590 && !warningShownRef.current.tenMin) {
@@ -98,11 +113,11 @@ const ClientLauncher = () => {
       warningShownRef.current.fiveMin = true;
       setTimeout(() => setShowToast(false), 8000);
     }
-  }, [timeLeft, isExpired, user]);
+  }, [timeLeft, isExpired, user, isGuest]);
 
   // 원격 명령 구독 (WBS 3단계)
   useEffect(() => {
-    if (!user) return;
+    if (!user && !isGuest) return;
 
     const setupCommandSubscription = async () => {
       const { data: roomData } = await supabase.from('rooms').select('id').eq('room_number', 1).single();
@@ -130,6 +145,7 @@ const ClientLauncher = () => {
               });
               setShowToast(true);
               setTimeout(() => {
+                sessionStorage.removeItem('isGuestSession');
                 supabase.auth.signOut();
                 window.location.href = '/login';
               }, 3000);
@@ -151,12 +167,12 @@ const ClientLauncher = () => {
     };
 
     let activeChannel: any;
-    setupCommandSubscription().then(ch => activeChannel = ch);
+    setupCommandSubscription().then(ch => { if(ch) activeChannel = ch; });
 
     return () => {
       if (activeChannel) supabase.removeChannel(activeChannel);
     };
-  }, [user]);
+  }, [user, isGuest]);
 
   const handleCallAdmin = async () => {
     try {
@@ -170,7 +186,7 @@ const ClientLauncher = () => {
       
       await supabase.from('notifications').insert({
         type: 'Call',
-        message: `${member?.name || 'GUEST'}(ID: ${user?.email?.split('@')[0]})님이 Station 1에서 관리자를 호출했습니다.`,
+        message: `${displayMember?.name || 'GUEST'}(ID: ${user?.email?.split('@')[0] || 'guest'})님이 Station 1에서 관리자를 호출했습니다.`,
         room_id: rooms?.id,
         is_read: false
       });
@@ -233,7 +249,7 @@ const ClientLauncher = () => {
           <div className="mb-6 px-2">
              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-purple-500/60 mb-1 block">Authentication Node Connected</span>
              <h2 className="text-4xl font-black italic tracking-tighter text-white uppercase leading-none">
-               {member?.name ? `WELCOME, ${member.name}` : 'Ready to Play?'}
+               {displayMember?.name ? `WELCOME, ${displayMember.name}` : 'Ready to Play?'}
              </h2>
           </div>
 
@@ -256,7 +272,7 @@ const ClientLauncher = () => {
                 <div className="flex flex-col">
                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Active Identity</span>
                    <span className="text-sm font-bold text-white uppercase italic tracking-tighter">
-                     {member?.rank || 'SILVER'} LEVEL [{(member?.points || 0).toLocaleString()} PT]
+                     {displayMember?.rank || 'SILVER'} LEVEL [{(displayMember?.points || 0).toLocaleString()} PT]
                    </span>
                 </div>
                 <div className="flex flex-col">
@@ -284,7 +300,7 @@ const ClientLauncher = () => {
         roomNumber={1} 
       />
 
-      <ChatWidget roomId={roomId} member={member} />
+      <ChatWidget roomId={roomId} member={displayMember} />
 
       {/* Modern Notification Toast */}
       <div className={cn(
