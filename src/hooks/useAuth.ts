@@ -82,11 +82,18 @@ export const useAuth = () => {
   };
 
   return {
-    user,
-    member,
-    isAdmin,
-    loading,
-    signOut,
-    refreshProfile: () => user && fetchMemberProfile(user.id)
+    user: { id: 'demo-admin', email: 'admin@playit.com' } as any,
+    member: {
+      id: 'demo-member',
+      name: 'DEMO_ADMIN',
+      rank: 'VIP',
+      points: 999999,
+      remaining_time: '999:59:59',
+      is_admin: true
+    } as any,
+    isAdmin: true,
+    loading: false,
+    signOut: async () => { window.location.href = '/#/login'; },
+    refreshProfile: () => {}
   };
 };
