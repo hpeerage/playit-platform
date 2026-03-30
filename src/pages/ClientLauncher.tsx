@@ -138,6 +138,8 @@ const ClientLauncher = () => {
           async (payload: any) => {
             const { command, payload: cmdPayload, id: cmdId } = payload.new;
             
+            /* 
+            // 데모 시연을 위해 관리자 원격 로그아웃 명령도 일시 수신 거부합니다.
             if (command === 'LOGOUT') {
               setToastConfig({
                 title: 'TERMINAL TERMINATED',
@@ -149,7 +151,9 @@ const ClientLauncher = () => {
                 supabase.auth.signOut();
                 window.location.href = '/login';
               }, 3000);
-            } else if (command === 'MESSAGE') {
+            } else 
+            */
+            if (command === 'MESSAGE') {
               setToastConfig({
                 title: 'ADMIN MESSAGE',
                 message: cmdPayload.message || '관리자로부터 메시지가 도착했습니다.'
