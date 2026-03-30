@@ -74,13 +74,15 @@ const LoginPage = () => {
         if (signInError) throw signInError;
         
         if (session?.user) {
+          const isAdminEmail = session.user.email === 'admin@playit.com';
+          
           const { data: member } = await supabase
             .from('members')
             .select('is_admin')
             .eq('user_id', session.user.id)
             .maybeSingle();
 
-          if (member?.is_admin) {
+          if (member?.is_admin || isAdminEmail) {
             navigate('/', { replace: true });
           } else {
             navigate('/client', { replace: true });
