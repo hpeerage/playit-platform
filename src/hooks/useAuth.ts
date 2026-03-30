@@ -1,99 +1,31 @@
-/* src/hooks/useAuth.ts */
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
-import type { User } from '@supabase/supabase-js';
-import type { Member } from '../lib/supabase';
+/* src/hooks/useAuth.ts - Extreme Demo Bypass Mode */
+import { useCallback } from 'react';
 
 export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [member, setMember] = useState<Member | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  const fetchMemberProfile = useCallback(async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('members')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // 프로필이 없는 경우 (새 회원가입 등)
-          console.warn('Member profile not found for user:', userId);
-        } else {
-          throw error;
-        }
-      }
-      setMember(data || null);
-      
-      // 관리자 권한 확인 (admin@playit.com 이메일은 DB 상태에 관계없이 관리자로 인식)
-      const currentSession = await supabase.auth.getSession();
-      const isAdminEmail = currentSession.data.session?.user.email === 'admin@playit.com';
-      setIsAdmin(data?.is_admin === true || isAdminEmail);
-    } catch (err) {
-      console.error('Error fetching member profile:', err);
-    }
-  }, []);
-
-  useEffect(() => {
-    // 1. 초기 세션 확인
-    const checkSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchMemberProfile(session.user.id);
-        }
-      } catch (err) {
-        console.error('Session check failed:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkSession();
-
-    // 2. 인증 상태 변화 감지
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_, session) => {
-      try {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchMemberProfile(session.user.id);
-        } else {
-          setMember(null);
-          setIsAdmin(false);
-        }
-      } catch (err) {
-        console.error('Auth state change failed:', err);
-      } finally {
-        setLoading(false);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [fetchMemberProfile]);
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
-  };
-
+  // 모든 인증 로직을 무시하고 즉시 데모 데이터를 반환합니다.
   return {
-    user: { id: 'demo-admin', email: 'admin@playit.com' } as any,
+    user: { 
+      id: 'demo-admin-uuid', 
+      email: 'admin@playit.com',
+      user_metadata: { full_name: 'DEMO_ADMIN_USER' }
+    } as any,
     member: {
-      id: 'demo-member',
+      id: 'demo-member-id',
+      user_id: 'demo-admin-uuid',
       name: 'DEMO_ADMIN',
       rank: 'VIP',
       points: 999999,
       remaining_time: '999:59:59',
-      is_admin: true
+      is_admin: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     } as any,
     isAdmin: true,
     loading: false,
-    signOut: async () => { window.location.href = '/#/login'; },
-    refreshProfile: () => {}
+    signOut: async () => { 
+      sessionStorage.clear();
+      window.location.href = '/#/login'; 
+    },
+    refreshProfile: useCallback(() => {}, [])
   };
 };
