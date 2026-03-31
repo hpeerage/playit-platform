@@ -2,6 +2,7 @@ import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import AdminDashboard from './pages/AdminDashboard';
 import ClientLauncher from './pages/ClientLauncher';
 import LoginPage from './pages/LoginPage';
+import PartnerLauncher from './pages/PartnerLauncher';
 
 function App() {
   return (
@@ -15,6 +16,9 @@ function App() {
         
         {/* 클라이언트 런처 (바이패스 적용) */}
         <Route path="/client" element={<ClientLauncher />} />
+        
+        {/* 배달 업체 전용 런처 */}
+        <Route path="/partner" element={<PartnerLauncher />} />
       </Routes>
     </Router>
   );
