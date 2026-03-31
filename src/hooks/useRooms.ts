@@ -1,5 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { type Room, type RoomStatus, type RoomPC } from '../lib/supabase';
+
+const STORAGE_KEY = 'playit-pms-rooms';
 
 // Helper to generate IDs
 const generatePCForRoom = (roomNum: number, status: RoomStatus): RoomPC[] => {
@@ -14,6 +16,16 @@ const generatePCForRoom = (roomNum: number, status: RoomStatus): RoomPC[] => {
 };
 
 const generateInitialRooms = (): Room[] => {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch (e) {
+      console.error('Failed to load saved rooms', e);
+    }
+  }
+
+  // Fallback to default generation (8 rooms per floor * 6 floors = 48)
   return Array.from({ length: 48 }, (_, i) => {
     const status: RoomStatus = i % 7 === 0 ? 'Using' : 'Empty';
     const floorHeight = 8;
@@ -42,6 +54,11 @@ const generateInitialRooms = (): Room[] => {
 export const useRooms = () => {
   const [rooms, setRooms] = useState<Room[]>(generateInitialRooms());
   const [loading] = useState(false);
+
+  // Sync to localStorage on every change
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(rooms));
+  }, [rooms]);
 
   const reconfigureStore = useCallback((floorPlans: { floor: number, count: number }[]) => {
     const newRooms: Room[] = [];

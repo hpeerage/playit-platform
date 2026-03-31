@@ -147,15 +147,12 @@ const AdminDashboard = () => {
   const floorGroups = useMemo(() => {
     if (!filteredRooms || filteredRooms.length === 0) return {};
     return filteredRooms.reduce((acc, room) => {
-      const zoneStr = room.zone || "101";
-      const roomNum = parseInt(zoneStr);
-      const floor = isNaN(roomNum) ? 1 : Math.floor(roomNum / 100);
-      const zone = zoneStr;
-      if (!acc[floor]) acc[floor] = {};
-      if (!acc[floor][zone]) acc[floor][zone] = [];
-      acc[floor][zone].push(room);
+      const roomNum = room.room_number;
+      const floor = Math.floor(roomNum / 100);
+      if (!acc[floor]) acc[floor] = [];
+      acc[floor].push(room);
       return acc;
-    }, {} as Record<number, Record<string, typeof filteredRooms>>);
+    }, {} as Record<number, typeof filteredRooms>);
   }, [filteredRooms]);
 
   const renderMainContent = () => {
@@ -224,36 +221,27 @@ const AdminDashboard = () => {
                          <span className="text-[9px] font-black uppercase text-slate-400">{floor}F Floor</span>
                          <div className="flex-1 h-px bg-white/5" />
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-                        {Object.entries(rooms).map(([zone, zoneRooms]) => (
-                          <div key={zone} className="bg-white/[0.02] p-2.5 rounded-2xl border border-white/5 backdrop-blur-sm">
-                             <div className="flex items-center justify-between mb-1.5">
-                                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest pl-1">Z-{zone}</span>
-                             </div>
-                             <div className="grid grid-cols-2 gap-2">
-                                {zoneRooms.map((room) => {
-                                  const activeOrder = orders.find(o => {
-                                    const matchStatus = o.status === 'Pending' || o.status === 'Processing';
-                                    const matchId = o.room_id === room.id;
-                                    const matchNumber = o.rooms?.room_number === room.room_number;
-                                    const matchDemo = o.rooms?.room_number === 1011 && room.room_number === 1;
-                                    return matchStatus && (matchId || matchNumber || matchDemo);
-                                  });
-                                  return (
-                                    <RoomCard
-                                      key={room.id}
-                                      roomNumber={room.room_number}
-                                      status={room.status}
-                                      remainingTime={room.remaining_time || "00:00:00"}
-                                      isSelected={selectedRoomId === room.id}
-                                      orderStatus={activeOrder?.status}
-                                      onClick={() => setSelectedRoomId(room.id)}
-                                    />
-                                  );
-                                })}
-                             </div>
-                          </div>
-                        ))}
+                      <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-12 gap-3">
+                        {rooms.map((room) => {
+                          const activeOrder = orders.find(o => {
+                            const matchStatus = o.status === 'Pending' || o.status === 'Processing';
+                            const matchId = o.room_id === room.id;
+                            const matchNumber = o.rooms?.room_number === room.room_number;
+                            const matchDemo = o.rooms?.room_number === 1011 && room.room_number === 1;
+                            return matchStatus && (matchId || matchNumber || matchDemo);
+                          });
+                          return (
+                            <RoomCard
+                              key={room.id}
+                              roomNumber={room.room_number}
+                              status={room.status}
+                              remainingTime={room.remaining_time || "00:00:00"}
+                              isSelected={selectedRoomId === room.id}
+                              orderStatus={activeOrder?.status}
+                              onClick={() => setSelectedRoomId(room.id)}
+                            />
+                          );
+                        })}
                       </div>
                     </div>
                   ))

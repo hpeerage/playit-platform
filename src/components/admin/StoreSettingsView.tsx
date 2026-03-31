@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, Save, Plus, Trash2, Building2, LayoutGrid, Info } from 'lucide-react';
+
+const SETTINGS_STORAGE_KEY = 'playit-pms-settings';
 
 interface FloorPlan {
   floor: number;
@@ -12,14 +14,22 @@ interface StoreSettingsViewProps {
 }
 
 const StoreSettingsView: React.FC<StoreSettingsViewProps> = ({ onReconfigure, currentRoomCount }) => {
-  const [plans, setPlans] = useState<FloorPlan[]>([
-    { floor: 1, count: 8 },
-    { floor: 2, count: 8 },
-    { floor: 3, count: 8 },
-    { floor: 4, count: 8 },
-    { floor: 5, count: 8 },
-    { floor: 6, count: 8 }
-  ]);
+  const [plans, setPlans] = useState<FloorPlan[]>(() => {
+    const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [
+      { floor: 1, count: 8 },
+      { floor: 2, count: 8 },
+      { floor: 3, count: 8 },
+      { floor: 4, count: 8 },
+      { floor: 5, count: 8 },
+      { floor: 6, count: 8 }
+    ];
+  });
+
+  // Sync settings to localStorage
+  useEffect(() => {
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(plans));
+  }, [plans]);
 
   const handleUpdate = (index: number, count: number) => {
     const newPlans = [...plans];
