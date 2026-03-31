@@ -10,6 +10,7 @@ import ReportsView from '../components/admin/ReportsView';
 import ProductManagementView from '../components/admin/ProductManagementView';
 import ChatView from '../components/admin/ChatView';
 import FAQManagementView from '../components/admin/FAQManagementView';
+import StoreSettingsView from '../components/admin/StoreSettingsView';
 import { useRooms } from '../hooks/useRooms';
 import { useOrders } from '../hooks/useOrders';
 import { supabase, type Notification as SupabaseNotification } from '../lib/supabase';
@@ -18,7 +19,7 @@ import { LayoutDashboard, Users, ShoppingBag, Monitor, BarChart3, Settings, Bell
 
 
 const AdminDashboard = () => {
-  const { rooms, stats, loading: roomsLoading, updateRoomStatus, checkoutRoom, sendRemoteCommand } = useRooms();
+  const { rooms, stats, loading: roomsLoading, updateRoomStatus, checkoutRoom, sendRemoteCommand, reconfigureStore } = useRooms();
   const { orders } = useOrders();
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [activeMenu, setActiveMenu] = useState('dashboard');
@@ -176,14 +177,15 @@ const AdminDashboard = () => {
       case 'inventory': return <ProductManagementView />;
       case 'support': return <ChatView />;
       case 'faq': return <FAQManagementView />;
+      case 'settings': return <StoreSettingsView onReconfigure={reconfigureStore} currentRoomCount={rooms.length} />;
       case 'dashboard':
 
       case 'pcstatus':
       default:
         return (
           <div className="flex-1 flex flex-col overflow-hidden relative">
-            <div className="flex-1 overflow-y-auto custom-scrollbar transition-all duration-700 pb-20">
-              <div className="mb-8 mt-8 flex items-center justify-between px-10">
+            <div className="flex-1 overflow-y-auto custom-scrollbar transition-all duration-700 pb-10">
+              <div className="mb-4 mt-4 flex items-center justify-between px-10">
                  <div>
                     <h2 className="text-[12px] font-black uppercase tracking-[0.4em] text-slate-500 mb-1">Store Layout Monitoring</h2>
                     <div className="flex items-center gap-3">
@@ -213,33 +215,28 @@ const AdminDashboard = () => {
                  </div>
               </div>
 
-              <div className={cn("px-10 transition-all duration-700", selectedRoomId ? "pr-[420px]" : "pr-10")}>
+              <div className={cn("px-10 transition-all duration-700 h-full flex flex-col", selectedRoomId ? "pr-[420px]" : "pr-10")}>
                 {viewMode === 'grid' ? (
                   Object.entries(floorGroups).sort(([a], [b]) => parseInt(a) - parseInt(b)).map(([floor, rooms]) => (
-                    <div key={floor} className="floor-section">
-                      <div className="floor-label flex items-center gap-3 mb-6">
-                         <div className="w-2 h-2 rounded-full bg-purple-500" />
-                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{floor}F Floor</span>
+                    <div key={floor} className="floor-section mb-4">
+                      <div className="floor-label flex items-center gap-2 mb-2">
+                         <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                         <span className="text-[9px] font-black uppercase text-slate-400">{floor}F Floor</span>
                          <div className="flex-1 h-px bg-white/5" />
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
                         {Object.entries(rooms).map(([zone, zoneRooms]) => (
-                          <div key={zone} className="space-y-4 bg-white/[0.02] p-6 rounded-[2rem] border border-white/5 backdrop-blur-sm">
-                             <div className="flex items-center justify-between px-2 mb-2">
-                                <div className="flex items-center gap-2">
-                                   <div className="w-1.5 h-1.5 rounded-full bg-purple-500 opacity-50" />
-                                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Zone {zone} Node</span>
-                                </div>
-                                <span className="text-[9px] font-bold text-slate-700 italic">{zoneRooms.length} Units</span>
+                          <div key={zone} className="bg-white/[0.02] p-2.5 rounded-2xl border border-white/5 backdrop-blur-sm">
+                             <div className="flex items-center justify-between mb-1.5">
+                                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest pl-1">Z-{zone}</span>
                              </div>
-                             <div className="grid grid-cols-2 gap-4">
+                             <div className="grid grid-cols-2 gap-2">
                                 {zoneRooms.map((room) => {
-                                  // 현재 좌석에 진행 중인 주문이 있는지 확인 (실제 DB 데이터와 데모룸 간 매칭)
                                   const activeOrder = orders.find(o => {
                                     const matchStatus = o.status === 'Pending' || o.status === 'Processing';
                                     const matchId = o.room_id === room.id;
                                     const matchNumber = o.rooms?.room_number === room.room_number;
-                                    const matchDemo = o.rooms?.room_number === 1011 && room.room_number === 1; // 1011번 데모 클라이언트를 1번 PC에 매핑
+                                    const matchDemo = o.rooms?.room_number === 1011 && room.room_number === 1;
                                     return matchStatus && (matchId || matchNumber || matchDemo);
                                   });
                                   return (
@@ -247,7 +244,7 @@ const AdminDashboard = () => {
                                       key={room.id}
                                       roomNumber={room.room_number}
                                       status={room.status}
-                                      remainingTime="02:30:00"
+                                      remainingTime={room.remaining_time || "00:00:00"}
                                       isSelected={selectedRoomId === room.id}
                                       orderStatus={activeOrder?.status}
                                       onClick={() => setSelectedRoomId(room.id)}

@@ -8,6 +8,14 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export type RoomStatus = 'Empty' | 'Using' | 'Maintenance' | 'Cleaning';
 
+export interface RoomPC {
+  id: string;
+  name: string;
+  status: 'Online' | 'Offline' | 'InUse';
+  user_name?: string;
+  specs?: string;
+}
+
 export interface Room {
   id: string;
   room_number: number;
@@ -17,6 +25,22 @@ export interface Room {
   current_user_id: string | null;
   created_at: string;
   updated_at: string;
+  // PMS (Motel/Hotel) Extended Fields
+  room_type?: string;
+  door_status?: 'Locked' | 'Open';
+  power_status?: 'On' | 'Off';
+  temperature?: number;
+  stay_type?: '대실' | '숙박';
+  check_in_time?: string;
+  check_out_time?: string;
+  outing_mode?: boolean;
+  welcome_mode?: boolean;
+  cleaning_report?: {
+    staff: string;
+    completed_at: string;
+    notes?: string;
+  };
+  pcs?: RoomPC[];
 }
 
 export interface Member {
