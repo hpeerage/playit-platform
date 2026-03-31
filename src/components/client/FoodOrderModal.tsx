@@ -97,9 +97,14 @@ const FoodOrderModal: React.FC<FoodOrderModalProps> = ({ isOpen, onClose }) => {
     try {
       setOrdered(true);
       
-      // 방 번호 조회 (데모용으로 1번 좌석 고정)
-      const { data: rooms } = await supabase.from('rooms').select('id').eq('room_number', 1).single();
-      const roomId = rooms?.id;
+      // 방 번호 조회 (데모용으로 1011번 좌석 사용, 실제 환경에서는 동적 할당 필요)
+      const { data: rooms, error: roomError } = await supabase.from('rooms').select('id').eq('room_number', 1011).single();
+      
+      if (roomError || !rooms) {
+        throw new Error('좌석 정보를 찾을 수 없습니다. (Room 1011)');
+      }
+      
+      const roomId = rooms.id;
 
       const orderItems = Object.entries(cart).map(([id, qty]) => {
         const item = products.find(m => m.id === id);

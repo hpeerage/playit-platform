@@ -9,14 +9,17 @@ import SeatMapView from '../components/admin/SeatMapView';
 import ReportsView from '../components/admin/ReportsView';
 import ProductManagementView from '../components/admin/ProductManagementView';
 import ChatView from '../components/admin/ChatView';
+import FAQManagementView from '../components/admin/FAQManagementView';
 import { useRooms } from '../hooks/useRooms';
-import { supabase } from '../lib/supabase';
+import { useOrders } from '../hooks/useOrders';
+import { supabase, type Notification as SupabaseNotification } from '../lib/supabase';
 import { cn } from '../lib/utils';
-import { LayoutDashboard, Users, ShoppingBag, Monitor, BarChart3, Settings, Bell, Grid, Map as MapIcon, X, Package, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Users, ShoppingBag, Monitor, BarChart3, Settings, Bell, Grid, Map as MapIcon, X, Package, MessageSquare, HelpCircle } from 'lucide-react';
 
 
 const AdminDashboard = () => {
-  const { rooms, stats, loading, updateRoomStatus, checkoutRoom, sendRemoteCommand } = useRooms();
+  const { rooms, stats, loading: roomsLoading, updateRoomStatus, checkoutRoom, sendRemoteCommand } = useRooms();
+  const { orders } = useOrders();
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [activeMenu, setActiveMenu] = useState('dashboard');
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
@@ -24,7 +27,7 @@ const AdminDashboard = () => {
   const [filter, setFilter] = useState('All');
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
-  const [notifications, setNotifications] = useState<{id: string, message: string, type: string, created_at: string, is_read: boolean}[]>([]);
+  const [notifications, setNotifications] = useState<SupabaseNotification[]>([]);
 
   // Header와 호환되는 stats 변환
   const headerStats = useMemo(() => ({
@@ -53,7 +56,7 @@ const AdminDashboard = () => {
     const fetchNotifications = async () => {
       const { data } = await supabase
         .from('notifications')
-        .select('*')
+        .select('*, rooms(room_number)')
         .eq('is_read', false)
         .order('created_at', { ascending: false });
       if (data) setNotifications(data);
@@ -66,8 +69,17 @@ const AdminDashboard = () => {
         event: 'INSERT', 
         schema: 'public', 
         table: 'notifications' 
-      }, (payload: any) => {
-        setNotifications(prev => [payload.new as any, ...prev]);
+      }, async (payload: any) => {
+        // 실시간 알림에 좌석 번호 추가 패칭
+        const { data: roomData } = await supabase.from('rooms').select('room_number').eq('id', payload.new.room_id).single();
+        const newNotification = { ...payload.new, rooms: roomData };
+        
+        setNotifications(prev => [newNotification as any, ...prev]);
+        
+        // 알림 효과음 재생
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        audio.play().catch(e => console.log('Audio play blocked by browser:', e));
+
         if (Notification.permission === 'granted') {
           new Notification('New Playit Alert', { body: payload.new.message });
         }
@@ -82,7 +94,7 @@ const AdminDashboard = () => {
   const fetchRecentNotifications = async () => {
     const { data } = await supabase
       .from('notifications')
-      .select('*')
+      .select('*, rooms(room_number)')
       .order('created_at', { ascending: false })
       .limit(20);
     if (data) setRecentNotifications(data);
@@ -113,6 +125,7 @@ const AdminDashboard = () => {
     { id: 'pcstatus', icon: Monitor, label: 'PC Status' },
     { id: 'inventory', icon: Package, label: 'Inventory' },
     { id: 'support', icon: MessageSquare, label: 'Support' },
+    { id: 'faq', icon: HelpCircle, label: 'FAQ Mng.' },
     { id: 'settings', icon: Settings, label: 'Settings' },
   ];
 
@@ -132,7 +145,7 @@ const AdminDashboard = () => {
   }, [filteredRooms]);
 
   const renderMainContent = () => {
-    if (loading) {
+    if (roomsLoading) {
       return (
         <div className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
@@ -149,6 +162,7 @@ const AdminDashboard = () => {
       case 'reports': return <ReportsView />;
       case 'inventory': return <ProductManagementView />;
       case 'support': return <ChatView />;
+      case 'faq': return <FAQManagementView />;
       case 'dashboard':
 
       case 'pcstatus':
@@ -206,16 +220,27 @@ const AdminDashboard = () => {
                                 <span className="text-[9px] font-bold text-slate-700 italic">{zoneRooms.length} Units</span>
                              </div>
                              <div className="grid grid-cols-2 gap-4">
-                                {zoneRooms.map((room) => (
-                                  <RoomCard
-                                    key={room.id}
-                                    roomNumber={room.room_number}
-                                    status={room.status}
-                                    remainingTime="02:30:00"
-                                    isSelected={selectedRoomId === room.id}
-                                    onClick={() => setSelectedRoomId(room.id)}
-                                  />
-                                ))}
+                                {zoneRooms.map((room) => {
+                                  // 현재 좌석에 진행 중인 주문이 있는지 확인 (실제 DB 데이터와 데모룸 간 매칭)
+                                  const activeOrder = orders.find(o => {
+                                    const matchStatus = o.status === 'Pending' || o.status === 'Processing';
+                                    const matchId = o.room_id === room.id;
+                                    const matchNumber = o.rooms?.room_number === room.room_number;
+                                    const matchDemo = o.rooms?.room_number === 1011 && room.room_number === 1; // 1011번 데모 클라이언트를 1번 PC에 매핑
+                                    return matchStatus && (matchId || matchNumber || matchDemo);
+                                  });
+                                  return (
+                                    <RoomCard
+                                      key={room.id}
+                                      roomNumber={room.room_number}
+                                      status={room.status}
+                                      remainingTime="02:30:00"
+                                      isSelected={selectedRoomId === room.id}
+                                      orderStatus={activeOrder?.status}
+                                      onClick={() => setSelectedRoomId(room.id)}
+                                    />
+                                  );
+                                })}
                              </div>
                           </div>
                         ))}
@@ -223,7 +248,7 @@ const AdminDashboard = () => {
                     </div>
                   ))
                 ) : (
-                  <SeatMapView rooms={filteredRooms} selectedRoomId={selectedRoomId} onRoomClick={setSelectedRoomId} />
+                  <SeatMapView rooms={filteredRooms} selectedRoomId={selectedRoomId} onRoomClick={setSelectedRoomId} orders={orders} />
                 )}
               </div>
             </div>
@@ -270,12 +295,33 @@ const AdminDashboard = () => {
            </div>
            <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {recentNotifications.map((n) => (
-                <div key={n.id} className={cn("p-4 rounded-xl border", n.is_read ? "opacity-50" : "bg-purple-500/5 border-purple-500/20")}>
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-[9px] font-black uppercase text-purple-400">{n.type}</span>
-                    <button onClick={() => dismissNotification(n.id)} className="text-[8px] text-slate-500 hover:text-white uppercase font-black">Dismiss</button>
+                <div key={n.id} className={cn(
+                  "p-4 rounded-xl border flex gap-4 transition-all hover:bg-white/5", 
+                  n.type === 'ORDER' ? "border-amber-500/30 bg-amber-500/5 shadow-[0_0_15px_rgba(245,158,11,0.05)]" : (n.is_read ? "opacity-50 border-white/5" : "bg-purple-500/5 border-purple-500/20")
+                )}>
+                  <div className="mt-1">
+                    {n.type === 'ORDER' ? (
+                      <ShoppingBag className="w-4 h-4 text-amber-500" />
+                    ) : (
+                      <Bell className="w-4 h-4 text-purple-400" />
+                    )}
                   </div>
-                  <p className="text-xs font-bold text-slate-300">{n.message}</p>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          "text-[9px] font-black uppercase tracking-widest",
+                          n.type === 'ORDER' ? "text-amber-500" : "text-purple-400"
+                        )}>{n.type}</span>
+                        <span className="text-[8px] font-black bg-white/10 px-1.5 py-0.5 rounded text-slate-500 border border-white/5">
+                          ST {n.rooms?.room_number || '??'}
+                        </span>
+                      </div>
+                      <button onClick={() => dismissNotification(n.id)} className="text-[8px] text-slate-500 hover:text-white uppercase font-black">Dismiss</button>
+                    </div>
+                    <p className="text-xs font-bold text-slate-300 mb-1 leading-relaxed whitespace-pre-wrap">{n.message}</p>
+                    <span className="text-[8px] font-bold text-slate-600 uppercase">{new Date(n.created_at).toLocaleString()}</span>
+                  </div>
                 </div>
               ))}
            </div>
@@ -285,13 +331,37 @@ const AdminDashboard = () => {
       {/* Admin Notifications Overlay */}
       <div className="fixed bottom-12 right-6 z-[2000] flex flex-col gap-3 items-end">
         {notifications.map((n) => (
-          <div key={n.id} className="bg-slate-900/95 border-l-4 border-l-red-500 p-4 rounded-xl shadow-2xl w-[320px] animate-in slide-in-from-right">
+          <div key={n.id} className={cn(
+            "bg-slate-900/95 border-l-4 p-4 rounded-xl shadow-2xl w-[320px] animate-in slide-in-from-right",
+            n.type === 'ORDER' ? "border-l-amber-500" : "border-l-red-500"
+          )}>
              <div className="flex gap-3">
-                <Bell className="w-5 h-5 text-red-500" />
+                {n.type === 'ORDER' ? (
+                  <ShoppingBag className="w-5 h-5 text-amber-500" />
+                ) : (
+                  <Bell className="w-5 h-5 text-red-500" />
+                )}
                 <div>
-                   <h4 className="text-[10px] font-black text-white uppercase tracking-widest">New Alert</h4>
-                   <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">{n.message}</p>
-                   <button onClick={() => dismissNotification(n.id)} className="mt-2 text-[8px] font-black text-red-400 uppercase">Dismiss</button>
+                   <div className="flex items-center gap-2">
+                      <h4 className="text-[10px] font-black text-white uppercase tracking-widest">
+                        {n.type === 'ORDER' ? 'Food Order' : 'New Alert'}
+                      </h4>
+                      <span className="text-[9px] font-black bg-white/10 px-2 py-0.5 rounded text-slate-400">
+                        STATION {n.rooms?.room_number || '??'}
+                      </span>
+                   </div>
+                   <p className={cn(
+                      "text-[11px] font-bold mt-1 whitespace-pre-wrap leading-relaxed",
+                      n.type === 'ORDER' ? "text-amber-200/90" : "text-slate-400 uppercase"
+                    )}>
+                      {n.message}
+                    </p>
+                   <button 
+                    onClick={() => dismissNotification(n.id)} 
+                    className={cn("mt-2 text-[8px] font-black uppercase", n.type === 'ORDER' ? "text-amber-400" : "text-red-400")}
+                   >
+                    Dismiss
+                   </button>
                 </div>
              </div>
           </div>

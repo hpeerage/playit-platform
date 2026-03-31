@@ -52,11 +52,10 @@ const OrderQueueView = () => {
 
             <div className="flex items-start justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-slate-950/50 flex flex-col items-center justify-center border border-white/5">
-                  <span className="text-[8px] font-black text-slate-600 uppercase">ST</span>
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex flex-col items-center justify-center border border-amber-500/20">
+                  <span className="text-[8px] font-black text-amber-600 uppercase">ST</span>
                   <span className="text-lg font-black text-white italic tabular-nums">
-                    {/* room_id에서 실제 room_number를 가져오려면 추가 Join 조회가 필요하지만 여기서는 ID 뒷부분 표시 */}
-                    {order.room_id.slice(-2)}
+                    {order.rooms?.room_number || '??'}
                   </span>
                 </div>
                 <div>
@@ -66,7 +65,7 @@ const OrderQueueView = () => {
                   <div className="flex items-center gap-2 text-slate-500">
                     <User className="w-3 h-3" />
                     <span className="text-[10px] font-bold tracking-widest uppercase">
-                      {order.member_id ? 'MEMBER' : 'GUEST'}
+                      {order.user_id ? 'MEMBER' : 'GUEST'}
                     </span>
                   </div>
                 </div>
@@ -105,14 +104,14 @@ const OrderQueueView = () => {
                   )}
                 >
                   <CheckCircle2 className="w-4 h-4" /> 
-                  {order.status === 'Pending' ? 'Set Processing' : 'Set Completed'}
+                  {order.status === 'Pending' ? '주문 확인' : '룸서비스 완료'}
                 </button>
                 <button 
                   onClick={() => cancelOrder(order.id)}
                   className="px-4 py-3 bg-white/5 border border-white/5 rounded-xl text-slate-600 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-all flex items-center justify-center group/cancel"
                 >
                   <XCircle className="w-4 h-4" />
-                  <span className="max-w-0 overflow-hidden group-hover/cancel:max-w-xs group-hover/cancel:ml-2 text-[8px] font-black uppercase transition-all duration-300">Refund</span>
+                  <span className="max-w-0 overflow-hidden group-hover/cancel:max-w-xs group-hover/cancel:ml-2 text-[8px] font-black uppercase transition-all duration-300">주문 취소</span>
                 </button>
               </div>
             )}

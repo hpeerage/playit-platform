@@ -6,13 +6,13 @@ export const useAuth = () => {
   // 빌드 오류 방지를 위해 미사용 Supabase 호출 로직을 제거했습니다.
   return {
     user: { 
-      id: 'demo-admin-uuid', 
+      id: '614fa574-a8e4-400c-b15a-15e7d3360e0b', 
       email: 'admin@playit.com',
       user_metadata: { full_name: 'DEMO_ADMIN_USER' }
     } as any,
     member: {
       id: 'demo-member-id',
-      user_id: 'demo-admin-uuid',
+      user_id: '614fa574-a8e4-400c-b15a-15e7d3360e0b',
       name: 'DEMO_ADMIN',
       rank: 'VIP',
       points: 999999,

@@ -35,11 +35,26 @@ export interface Member {
 export interface Order {
   id: string;
   room_id: string;
-  member_id: string;
+  user_id: string;
   items: any[];
   total_price: number;
-  status: 'Pending' | 'Processing' | 'Completed' | 'Canceled';
+  status: 'Pending' | 'Processing' | 'Completed' | 'Cancelled';
   created_at: string;
+  rooms?: {
+    room_number: number;
+  };
+}
+
+export interface Notification {
+  id: string;
+  type: 'CALL' | 'ORDER' | 'SYSTEM';
+  message: string;
+  room_id: string;
+  is_read: boolean;
+  created_at: string;
+  rooms?: {
+    room_number: number;
+  };
 }
 
 export interface Product {

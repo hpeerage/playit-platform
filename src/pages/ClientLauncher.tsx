@@ -7,6 +7,7 @@ import GameListModal from '../components/client/GameListModal';
 import FoodOrderModal from '../components/client/FoodOrderModal';
 import MyInfoModal from '../components/client/MyInfoModal';
 import DeliveryOrderModal from '../components/client/DeliveryOrderModal';
+import FAQModal from '../components/client/FAQModal';
 import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -17,8 +18,8 @@ const ClientLauncher = () => {
   const { user, member } = useAuth();
   const isGuest = sessionStorage.getItem('isGuestSession') === 'true';
   const displayMember = (member || (isGuest ? {
-    id: 'guest',
-    user_id: 'guest',
+    id: '614fa574-a8e4-400c-b15a-15e7d3360e0b',
+    user_id: '614fa574-a8e4-400c-b15a-15e7d3360e0b',
     name: 'DEMO_USER',
     remaining_time: '36000',
     points: 1250,
@@ -36,6 +37,7 @@ const ClientLauncher = () => {
   const [isFoodModalOpen, setIsFoodModalOpen] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
+  const [isFaqModalOpen, setIsFaqModalOpen] = useState(false);
 
   const { formattedTime, timeLeft, isExpired } = useTimer(displayMember?.remaining_time || null);
   const warningShownRef = useRef({ fiveMin: false, tenMin: false });
@@ -120,7 +122,7 @@ const ClientLauncher = () => {
     if (!user && !isGuest) return;
 
     const setupCommandSubscription = async () => {
-      const { data: roomData } = await supabase.from('rooms').select('id').eq('room_number', 1).single();
+      const { data: roomData } = await supabase.from('rooms').select('id').eq('room_number', 1011).single();
       if (!roomData) return;
       setRoomId(roomData.id);
 
@@ -186,11 +188,11 @@ const ClientLauncher = () => {
       });
       setShowToast(true);
       
-      const { data: rooms } = await supabase.from('rooms').select('id').eq('room_number', 1).single();
+      const { data: rooms } = await supabase.from('rooms').select('id').eq('room_number', 1011).single();
       
       await supabase.from('notifications').insert({
-        type: 'Call',
-        message: `${displayMember?.name || 'GUEST'}(ID: ${user?.email?.split('@')[0] || 'guest'})님이 Station 1에서 관리자를 호출했습니다.`,
+        type: 'CALL', // 대문자로 통일
+        message: `${displayMember?.name || 'GUEST'}(ID: ${user?.email?.split('@')[0] || 'guest'})님이 Station 1011에서 관리자를 호출했습니다.`,
         room_id: rooms?.id,
         is_read: false
       });
@@ -221,7 +223,7 @@ const ClientLauncher = () => {
       description: "24/7 TERMINAL SUPPORT", 
       icon: Headset, 
       color: "bg-emerald-600", 
-      onClick: handleCallAdmin 
+      onClick: () => setIsFaqModalOpen(true) 
     },
     { 
       title: "MY INFO", 
@@ -301,7 +303,12 @@ const ClientLauncher = () => {
       <DeliveryOrderModal 
         isOpen={isDeliveryModalOpen} 
         onClose={() => setIsDeliveryModalOpen(false)} 
-        roomNumber={1} 
+        roomNumber={1011} 
+      />
+      <FAQModal 
+        isOpen={isFaqModalOpen} 
+        onClose={() => setIsFaqModalOpen(false)} 
+        onRequestCall={handleCallAdmin} 
       />
 
       <ChatWidget roomId={roomId} member={displayMember} />

@@ -15,7 +15,7 @@ export const useOrders = () => {
         // 최신 주문이 위로 오도록 정렬
         const { data, error } = await supabase
           .from('orders')
-          .select('*')
+          .select('*, rooms(room_number)')
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -30,19 +30,26 @@ export const useOrders = () => {
 
     fetchOrders();
 
+    const channelId = `orders-realtime-${Math.random()}`;
     const channel = supabase
-      .channel('orders-realtime')
+      .channel(channelId)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
         (payload) => {
-          const { eventType, new: newRecord, old: oldRecord } = payload;
-          setOrders((prev) => {
-            if (eventType === 'INSERT') return [newRecord as Order, ...prev];
-            if (eventType === 'UPDATE') return prev.map(o => o.id === (newRecord as Order).id ? (newRecord as Order) : o);
-            if (eventType === 'DELETE') return prev.filter(o => o.id !== (oldRecord as { id: string }).id);
-            return prev;
-          });
+          const fetchAndAddOrder = async (record: Order) => {
+            const { data } = await supabase.from('rooms').select('room_number').eq('id', record.room_id).single();
+            const orderWithRoom = { ...record, rooms: data || undefined };
+            setOrders(prev => [orderWithRoom, ...prev]);
+          };
+
+          if (payload.eventType === 'INSERT') {
+            fetchAndAddOrder(payload.new as Order);
+          } else if (payload.eventType === 'UPDATE') {
+            setOrders((prev) => prev.map(o => o.id === (payload.new as Order).id ? { ...o, ...(payload.new as Order) } : o));
+          } else if (payload.eventType === 'DELETE') {
+            setOrders((prev) => prev.filter(o => o.id !== (payload.old as { id: string }).id));
+          }
         }
       )
       .subscribe();
@@ -55,7 +62,7 @@ export const useOrders = () => {
   const updateOrderStatus = useCallback(async (orderId: string, status: Order['status']) => {
     const { error } = await supabase
       .from('orders')
-      .update({ status, updated_at: new Date().toISOString() })
+      .update({ status })
       .eq('id', orderId);
     if (error) console.error('Error updating order status:', error.message);
   }, []);

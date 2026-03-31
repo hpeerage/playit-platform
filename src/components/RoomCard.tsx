@@ -1,6 +1,7 @@
 /* src/components/RoomCard.tsx - Premium High-Density Version */
 import React from 'react';
 import { cn } from '../lib/utils';
+import { ShoppingBag, UtensilsCrossed } from 'lucide-react';
 import type { RoomStatus } from '../lib/supabase';
 
 interface RoomCardProps {
@@ -8,6 +9,7 @@ interface RoomCardProps {
   status: RoomStatus;
   remainingTime?: string;
   isSelected?: boolean;
+  orderStatus?: string;
   onClick: () => void;
 }
 
@@ -16,6 +18,7 @@ const RoomCard: React.FC<RoomCardProps> = ({
   status, 
   remainingTime = "00:00:00",
   isSelected, 
+  orderStatus,
   onClick 
 }) => {
   const isUsing = status === 'Using';
@@ -68,6 +71,23 @@ const RoomCard: React.FC<RoomCardProps> = ({
       {/* 3. Selection Glow Overlay */}
       {isUsing && (
         <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/5 to-transparent pointer-events-none" />
+      )}
+
+      {/* 4. Order Status Indicator */}
+      {orderStatus && (
+        <div className={cn(
+          "absolute bottom-1 right-1 px-1.5 py-0.5 rounded shadow-lg z-20 border border-white/10 flex items-center gap-1 transition-all",
+          orderStatus === 'Pending' ? "bg-amber-500 text-amber-950 animate-pulse" : "bg-blue-500 text-white"
+        )}>
+           {orderStatus === 'Pending' ? (
+             <ShoppingBag className="w-2 h-2" />
+           ) : (
+             <UtensilsCrossed className="w-2 h-2" />
+           )}
+           <span className="text-[6px] font-black tracking-tight whitespace-nowrap pt-[0.5px]">
+             {orderStatus === 'Pending' ? '주문대기' : '조리중'}
+           </span>
+        </div>
       )}
     </div>
   );

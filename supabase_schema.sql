@@ -109,6 +109,8 @@ DECLARE
     v_user_points INTEGER;
     v_item RECORD;
     v_order_id UUID;
+    v_details TEXT := '';
+    v_item_grp RECORD;
 BEGIN
     -- 1. 포인트 잔액 확인
     SELECT points INTO v_user_points FROM public.members WHERE id = p_user_id;
@@ -143,6 +145,21 @@ BEGIN
     INSERT INTO public.orders (room_id, user_id, total_price, order_items, status)
     VALUES (p_room_id, p_user_id, p_total_price, p_order_items, 'Pending')
     RETURNING id INTO v_order_id;
+
+    -- 6. 상세 주문 내역 문자열 생성
+    FOR v_item_grp IN SELECT name, count FROM jsonb_to_recordset(p_order_items) AS x(name TEXT, count INTEGER)
+    LOOP
+        v_details := v_details || v_item_grp.name || ' x' || v_item_grp.count || ', ';
+    END LOOP;
+    v_details := LEFT(v_details, LENGTH(v_details) - 2); -- 마지막 쉼표 제거
+
+    -- 7. 관리자 알림 자동 생성
+    INSERT INTO public.notifications (type, message, room_id)
+    VALUES (
+        'ORDER', 
+        '[STATION ' || (SELECT room_number FROM public.rooms WHERE id = p_room_id) || '] ' || v_details || ' 주문 접수 (결제: ' || to_char(p_total_price, 'FM999,999,999') || '원)', 
+        p_room_id
+    );
 
     RETURN json_build_object('success', true, 'order_id', v_order_id);
 EXCEPTION WHEN OTHERS THEN
