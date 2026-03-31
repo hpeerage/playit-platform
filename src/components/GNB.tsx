@@ -13,7 +13,7 @@ const GNB: React.FC<GNBProps> = ({ activeMenu, setActiveMenu, items }) => {
   const menuItems = items;
 
   return (
-    <nav className="fixed left-0 top-0 bottom-0 w-[80px] hover:w-[220px] bg-[#020617] border-r border-white/5 z-[3000] flex flex-col items-center py-6 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group/gnb shadow-2xl">
+    <nav className="relative w-[80px] hover:w-[220px] bg-[#020617] border-r border-white/5 h-full z-[3000] flex flex-col items-center py-6 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group/gnb shadow-2xl shrink-0">
       {/* Brand Icon */}
       <div className="mb-12 flex items-center justify-center w-full px-6">
         <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.5)]">

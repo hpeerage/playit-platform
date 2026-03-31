@@ -1,6 +1,5 @@
-/* src/components/admin/SeatMapView.tsx */
-import React from 'react';
-import { Monitor, Crown, Gamepad2, Users, ShoppingBag, UtensilsCrossed } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { BedDouble, ShoppingBag, UtensilsCrossed, Building2, UserCircle2, Clock } from 'lucide-react';
 import type { Room, Order } from '../../lib/supabase';
 import { cn } from '../../lib/utils';
 
@@ -12,112 +11,137 @@ interface SeatMapViewProps {
 }
 
 const SeatMapView: React.FC<SeatMapViewProps> = ({ rooms, selectedRoomId, onRoomClick, orders = [] }) => {
-  // 간단한 구역 할당 로직 (실제로는 DB 속성으로 관리 가능)
-  const getZone = (num: number) => {
-    if (num <= 12) return { id: 'VIP', label: 'VIP Zone', icon: Crown, color: 'text-amber-400', bg: 'bg-amber-400/5' };
-    if (num <= 30) return { id: 'FPS', label: 'FPS Pro Zone', icon: Gamepad2, color: 'text-blue-400', bg: 'bg-blue-400/5' };
-    return { id: 'COMMON', label: 'General Zone', icon: Users, color: 'text-slate-400', bg: 'bg-slate-400/5' };
-  };
+  
+  // Group rooms by Floor
+  const floorGroups = useMemo(() => {
+    return rooms.reduce((acc, room) => {
+      const floor = Math.floor(room.room_number / 100);
+      if (!acc[floor]) acc[floor] = [];
+      acc[floor].push(room);
+      return acc;
+    }, {} as Record<number, Room[]>);
+  }, [rooms]);
 
-  const zones = ['VIP', 'FPS', 'COMMON'];
+  const sortedFloors = Object.keys(floorGroups).map(Number).sort((a, b) => a - b);
 
   return (
-    <div className="flex-1 p-6 overflow-auto custom-scrollbar animate-in fade-in slide-in-from-right-4 duration-1000">
-      <div className="min-w-[1000px] space-y-12 pb-20">
-        {zones.map(zoneId => {
-          const zoneInfo = zoneId === 'VIP' ? getZone(1) : zoneId === 'FPS' ? getZone(13) : getZone(31);
-          const zoneRooms = rooms.filter(r => getZone(r.room_number).id === zoneId);
+    <div className="flex-1 p-6 overflow-auto custom-scrollbar animate-in fade-in slide-in-from-right-4 duration-700">
+      <div className="min-w-[1000px] space-y-16 pb-20">
+        
+        {sortedFloors.map(floor => {
+          const floorRooms = floorGroups[floor];
 
           return (
-            <div key={zoneId} className={cn("p-8 rounded-3xl border border-white/5 relative group transition-all duration-700", zoneInfo.bg)}>
-              {/* Zone Header */}
-              <div className="absolute -top-4 left-8 px-5 py-2 bg-slate-900 border border-white/10 rounded-2xl flex items-center gap-3 shadow-2xl">
-                <zoneInfo.icon className={cn("w-4 h-4", zoneInfo.color)} />
-                <span className="text-xs font-black italic text-white uppercase tracking-tighter">{zoneInfo.label}</span>
-                <span className="text-[9px] font-bold text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">{zoneRooms.length} Seats</span>
+            <div key={floor} className="relative">
+              {/* Floor Header Label */}
+              <div className="flex items-center gap-3 mb-6 px-4">
+                 <div className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
+                 <span className="text-[10px] font-black uppercase text-white/40 tracking-[0.4em]">{floor}F Floor Map</span>
+                 <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
               </div>
 
-              <div className="grid grid-cols-6 lg:grid-cols-10 gap-4 mt-4">
-                {zoneRooms.map(room => (
-                  <button
-                    key={room.id}
-                    onClick={() => onRoomClick(room.id)}
-                    className={cn(
-                      "aspect-square rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all duration-500 relative group/seat scale-100 active:scale-90",
-                      selectedRoomId === room.id ? "border-purple-500 ring-2 ring-purple-500/20 shadow-[0_0_20px_rgba(168,85,247,0.3)] bg-purple-500/10" : "border-white/5 bg-slate-900/40 hover:border-white/20 hover:bg-slate-800",
-                    )}
-                  >
-                    <Monitor className={cn(
-                      "w-4 h-4 transition-colors",
-                      room.status === 'Using' ? "text-emerald-400" :
-                      room.status === 'Maintenance' ? "text-red-400" :
-                      room.status === 'Cleaning' ? "text-blue-400" : "text-slate-600"
-                    )} />
-                    <span className="text-[10px] font-black italic tabular-nums text-white/80">{room.room_number.toString().padStart(2, '0')}</span>
-                    
-                    {/* Tiny Status Dot */}
-                    <div className={cn(
-                       "absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full",
-                       room.status === 'Using' ? "bg-emerald-500 glow-green" :
-                       room.status === 'Maintenance' ? "bg-red-500" : "bg-transparent"
-                    )} />
+              {/* Floor Container */}
+              <div className="bg-[#121829]/30 rounded-[2.5rem] p-10 border border-white/5 backdrop-blur-sm shadow-2xl relative overflow-hidden group">
+                {/* Background Decor */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/5 blur-[100px] pointer-events-none" />
+                
+                <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-12 gap-5 relative z-10">
+                  {floorRooms.map(room => {
+                    const activeOrder = orders.find(o => {
+                      const matchStatus = o.status === 'Pending' || o.status === 'Processing';
+                      const matchId = o.room_id === room.id;
+                      const matchNumber = o.rooms?.room_number === room.room_number;
+                      const matchDemo = o.rooms?.room_number === 1011 && room.room_number === 1;
+                      return matchStatus && (matchId || matchNumber || matchDemo);
+                    });
 
-                    {/* Hover Info Tooltip */}
-                    <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-slate-950 px-2 py-1 rounded text-[8px] font-bold text-slate-400 opacity-0 group-hover/seat:opacity-100 transition-opacity whitespace-nowrap z-10 border border-white/10 pointer-events-none">
-                       {room.status === 'Using' ? 'Park Ji-Woo' : room.status}
-                    </div>
-
-                    {/* Order Status Badge */}
-                    {(() => {
-                      const activeOrder = orders.find(o => {
-                        const matchStatus = o.status === 'Pending' || o.status === 'Processing';
-                        const matchId = o.room_id === room.id;
-                        const matchNumber = o.rooms?.room_number === room.room_number;
-                        const matchDemo = o.rooms?.room_number === 1011 && room.room_number === 1; // 1011번 데모 클라이언트를 1번 PC에 매핑
-                        return matchStatus && (matchId || matchNumber || matchDemo);
-                      });
-                      if (!activeOrder) return null;
-                      return (
-                        <div className={cn(
-                          "absolute bottom-1 right-1 flex items-center gap-1 px-1 py-0.5 rounded shadow-lg z-20 border border-white/10",
-                          activeOrder.status === 'Pending' ? "bg-amber-500 text-amber-950 animate-pulse" : "bg-blue-500 text-white"
+                    return (
+                      <button
+                        key={room.id}
+                        onClick={() => onRoomClick(room.id)}
+                        className={cn(
+                          "aspect-square rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all duration-500 relative group/seat transform-gpu",
+                          selectedRoomId === room.id 
+                            ? "bg-purple-600 border-purple-500 shadow-[0_0_30px_rgba(147,51,234,0.3)] scale-[1.05] z-10" 
+                            : "bg-[#0a0f1a] border-white/10 hover:border-white/30 hover:bg-[#161c2e] hover:-translate-y-1 active:scale-95"
+                        )}
+                      >
+                        {/* Bed Icon for Room feeling */}
+                        <BedDouble className={cn(
+                          "w-5 h-5 transition-all duration-500",
+                          selectedRoomId === room.id ? "text-white" :
+                          room.status === 'Using' ? "text-emerald-400 group-hover/seat:scale-110" :
+                          room.status === 'Maintenance' ? "text-red-400" :
+                          room.status === 'Cleaning' ? "text-blue-400" : "text-slate-700"
+                        )} />
+                        
+                        <span className={cn(
+                          "text-[11px] font-black italic tracking-tighter transition-colors",
+                          selectedRoomId === room.id ? "text-white" : "text-slate-400"
                         )}>
-                           {activeOrder.status === 'Pending' ? (
-                             <ShoppingBag className="w-1.5 h-1.5" />
-                           ) : (
-                             <UtensilsCrossed className="w-1.5 h-1.5" />
-                           )}
-                           <span className="text-[5px] font-black tracking-tight whitespace-nowrap pt-[0.5px]">
-                             {activeOrder.status === 'Pending' ? '주문' : '조리'}
-                           </span>
-                        </div>
-                      );
-                    })()}
-                  </button>
-                ))}
+                          {room.room_number}
+                        </span>
+                        
+                        {/* Status Pulse Dot */}
+                        <div className={cn(
+                           "absolute top-2 right-2 w-1.5 h-1.5 rounded-full ring-2 ring-[#0a0f1a]",
+                           room.status === 'Using' ? "bg-emerald-500 animate-pulse glow-green" :
+                           room.status === 'Maintenance' ? "bg-red-500" :
+                           room.status === 'Cleaning' ? "bg-blue-500" : "bg-transparent"
+                        )} />
+
+                        {/* Hover Overlay Info */}
+                        {room.status === 'Using' && (
+                           <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-950 border border-white/10 rounded-lg opacity-0 group-hover/seat:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-[100] flex items-center gap-1.5 shadow-2xl">
+                              <UserCircle2 className="w-3 h-3 text-emerald-400" />
+                              <span className="text-[9px] font-black text-slate-300">Park Ji-Woo</span>
+                              <div className="w-px h-2 bg-white/10" />
+                              <Clock className="w-3 h-3 text-slate-500" />
+                              <span className="text-[9px] font-bold text-slate-500">02:30</span>
+                           </div>
+                        )}
+
+                        {/* Order Indicator */}
+                        {activeOrder && (
+                          <div className={cn(
+                            "absolute -bottom-1 -right-1 flex items-center gap-1 px-1.5 py-0.5 rounded-md shadow-xl z-20 border border-white/10",
+                            activeOrder.status === 'Pending' ? "bg-amber-500 text-amber-950" : "bg-blue-600 text-white"
+                          )}>
+                             {activeOrder.status === 'Pending' ? <ShoppingBag className="w-2 h-2" /> : <UtensilsCrossed className="w-2 h-2" />}
+                             <span className="text-[6px] font-black uppercase tracking-tighter">{activeOrder.status === 'Pending' ? 'ORD' : 'COOK'}</span>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           );
         })}
       </div>
       
-      {/* Map Legend */}
-      <div className="fixed bottom-12 left-[110px] bg-slate-900/80 backdrop-blur-md border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-8 shadow-2xl z-50">
-         <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 glow-green" />
-            <span className="text-[9px] font-black uppercase text-slate-300">Using</span>
+      {/* Legend Footer */}
+      <div className="fixed bottom-12 left-[120px] bg-[#050914]/80 backdrop-blur-xl border border-white/10 px-8 py-4 rounded-[1.5rem] flex items-center gap-10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-50 animate-in slide-in-from-bottom-5 duration-700">
+         <div className="flex items-center gap-2.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 glow-green animate-pulse" />
+            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Occupied</span>
          </div>
-         <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-slate-600" />
-            <span className="text-[9px] font-black uppercase text-slate-300">Empty</span>
+         <div className="flex items-center gap-2.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-slate-700" />
+            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Vacant</span>
          </div>
-         <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-red-500" />
-            <span className="text-[9px] font-black uppercase text-slate-300">Error</span>
+         <div className="flex items-center gap-2.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Cleaning</span>
          </div>
-         <div className="flex items-center gap-2 border-l border-white/10 pl-8 ml-2">
-            <Crown className="w-3 h-3 text-amber-400" />
-            <span className="text-[9px] font-black uppercase text-slate-300">VIP</span>
+         <div className="flex items-center gap-2.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
+            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Alert</span>
+         </div>
+         <div className="w-px h-4 bg-white/10" />
+         <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            <Building2 className="w-4 h-4 text-purple-500" /> Floor Map Mode
          </div>
       </div>
     </div>
