@@ -167,8 +167,8 @@ const AdminDashboard = () => {
       case 'pms':
       default:
         return (
-          <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-            <div className="flex-1 overflow-y-auto custom-scrollbar pb-20">
+          <div className="flex flex-col min-h-full relative">
+            <div className="flex-1 pb-20">
               <div className="mb-4 mt-6 flex items-center justify-between px-10">
                  <div>
                     <h2 className="text-[12px] font-black uppercase tracking-[0.4em] text-slate-500 mb-1">Store Layout Monitoring</h2>
@@ -261,7 +261,7 @@ const AdminDashboard = () => {
           unreadCount={unreadCount}
           onBellClick={() => setIsHistoryOpen(true)}
         />
-        <main className="flex-1 overflow-hidden relative">
+        <main className="flex-1 overflow-y-auto custom-scrollbar relative bg-[#050914]">
           {renderMainContent()}
         </main>
       </div>

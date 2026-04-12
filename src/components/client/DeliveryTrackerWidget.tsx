@@ -36,11 +36,16 @@ const DeliveryTrackerWidget = ({ roomId }: DeliveryTrackerWidgetProps) => {
       "fixed bottom-24 right-8 z-50 w-80 animate-in slide-in-from-right-8 fade-in duration-500",
       justCompleted && "animate-bounce"
     )}>
+      {/* Glow Effect for Completion */}
+      {justCompleted && (
+        <div className="absolute inset-0 bg-emerald-500/20 rounded-[24px] animate-ping pointer-events-none" />
+      )}
+      
       <div className={cn(
-        "rounded-[24px] overflow-hidden border shadow-2xl backdrop-blur-xl relative p-5 transition-all",
+        "rounded-[24px] overflow-hidden border shadow-2xl backdrop-blur-xl relative p-5 transition-all duration-700",
         activeOrder.status === 'Pending' && "bg-slate-900/90 border-white/10",
         activeOrder.status === 'Delivering' && "bg-amber-500/90 border-amber-400 text-slate-950",
-        activeOrder.status === 'Completed' && "bg-emerald-500/90 border-emerald-400 text-white"
+        activeOrder.status === 'Completed' && "bg-emerald-500 border-emerald-400 text-white"
       )}>
         {/* Close Button */}
         {activeOrder.status === 'Completed' && (

@@ -75,6 +75,45 @@ const ClientLauncher = () => {
     };
   }, [user, isGuest]);
 
+  // 실시간 배달 주문 상태 감지
+  useEffect(() => {
+    if (!roomId) return;
+
+    const channel = supabase
+      .channel(`room-delivery-orders-${roomId}`)
+      .on(
+        'postgres_changes',
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'delivery_orders',
+          filter: `room_id=eq.${roomId}`
+        },
+        (payload: any) => {
+          if (payload.new.status === 'Completed' && payload.old.status !== 'Completed') {
+            setToastConfig({
+              title: 'DELIVERY COMPLETED',
+              message: '배달 음식이 도착했습니다! 문 앞을 확인해주세요.'
+            });
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 8000);
+          } else if (payload.new.status === 'Delivering' && payload.old.status !== 'Delivering') {
+            setToastConfig({
+              title: 'DELIVERY STARTED',
+              message: '주문하신 음식이 배달을 시작했습니다.'
+            });
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 5000);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [roomId]);
+
   // 저시간 경고 및 자동 로그아웃 (WBS 104)
   useEffect(() => {
     if (!user && !isGuest) return;
