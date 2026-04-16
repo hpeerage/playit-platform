@@ -221,5 +221,7 @@ CREATE TABLE IF NOT EXISTS public.messages (
 CREATE INDEX IF NOT EXISTS idx_messages_room_id ON public.messages(room_id);
 CREATE INDEX IF NOT EXISTS idx_messages_created_at ON public.messages(created_at);
 
-
-
+-- 14. 보안 설정 (RLS 활성화 권장)
+-- 모든 테이블에 행 레벨 보안(RLS)을 적용하려면 'security_fix.sql' 스크립트를 실행해 주세요.
+-- 정식 서비스 전환 시 보안 취약점 해결을 위해 반드시 필요합니다.
+-- 예시: ALTER TABLE public.members ENABLE ROW LEVEL SECURITY;

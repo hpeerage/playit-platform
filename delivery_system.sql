@@ -59,11 +59,22 @@ ALTER TABLE public.delivery_menus ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.delivery_orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.delivery_order_items ENABLE ROW LEVEL SECURITY;
 
--- 데모를 위한 전면 공개(Public Access) 정책
-CREATE POLICY "Allow public full access to delivery_partners" ON public.delivery_partners FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow public full access to delivery_menus" ON public.delivery_menus FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow public full access to delivery_orders" ON public.delivery_orders FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow public full access to delivery_order_items" ON public.delivery_order_items FOR ALL USING (true) WITH CHECK (true);
+-- 보안 강화 정책: 정보 조회는 공개, 주문 생성은 허용, 관리는 관리자 전용
+-- (is_admin() 함수가 security_fix.sql을 통해 생성되어 있어야 합니다)
+
+-- 1. 조회 권한
+CREATE POLICY "Allow public read to delivery indicators" ON public.delivery_partners FOR SELECT USING (true);
+CREATE POLICY "Allow public read to delivery menus" ON public.delivery_menus FOR SELECT USING (true);
+CREATE POLICY "Allow read own or admin orders" ON public.delivery_orders FOR SELECT USING (true); -- 실시간 추적을 위해 일단 오픈
+
+-- 2. 주문 생성 권한 (익명 주문 허용)
+CREATE POLICY "Allow anyone to place delivery orders" ON public.delivery_orders FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow anyone to add delivery items" ON public.delivery_order_items FOR INSERT WITH CHECK (true);
+
+-- 3. 관리 권한 (is_admin() 헬퍼 함수 활용)
+CREATE POLICY "Allow admin full access to delivery partners" ON public.delivery_partners FOR ALL USING (public.is_admin());
+CREATE POLICY "Allow admin full access to delivery menus" ON public.delivery_menus FOR ALL USING (public.is_admin());
+CREATE POLICY "Allow admin manage delivery orders" ON public.delivery_orders FOR ALL USING (public.is_admin());
 
 -- 초반 더미 데이터 구축 (제휴 업체 6곳)
 DO $$
